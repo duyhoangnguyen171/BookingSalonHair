@@ -11,5 +11,8 @@ namespace BookingSalonHair.Interfaces
         Task<AppointmentDTO> CreateAppointmentAsync(AppointmentDTO dto);
         Task<AppointmentDTO> UpdateAppointmentAsync(int id, AppointmentDTO dto);
         Task<bool> DeleteAppointmentAsync(int id);
+
+        // Phương thức để cập nhật trạng thái lịch hẹn
+        Task<bool> UpdateAppointmentStatusAsync(int id, AppointmentStatus status);
     }
 }

@@ -54,6 +54,19 @@ namespace BookingSalonHair.Services
             return true;
         }
 
+        // Phương thức cần triển khai để thay đổi trạng thái lịch hẹn
+        public async Task<bool> UpdateAppointmentStatusAsync(int id, Models.AppointmentStatus status)
+        {
+            var appointment = await _context.Appointments.FindAsync(id);
+            if (appointment == null) return false;
+
+            appointment.Status = status; // Cập nhật trạng thái
+            _context.Appointments.Update(appointment);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // Các phương thức còn lại trong interface
         Task<IEnumerable<AppointmentDTO>> IAppointmentService.GetAllAppointmentsAsync()
         {
             throw new NotImplementedException();
@@ -75,6 +88,11 @@ namespace BookingSalonHair.Services
         }
 
         public Task<bool> DeleteAppointmentAsync(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> UpdateAppointmentStatusAsync(int id, DTOs.AppointmentStatus status)
         {
             throw new NotImplementedException();
         }

@@ -38,7 +38,7 @@ namespace BookingSalonHair.Models
 
         // Đánh dấu [JsonIgnore] để ngừng serialize Contacts trong User
         [JsonIgnore]
-        public ICollection<Contact> Contacts { get; set; }
+        public ICollection<Contact> Contacts { get; set; } = null;
 
         public ICollection<Appointment> Appointments { get; set; }
         public ICollection<Gallery> Galleries { get; set; }

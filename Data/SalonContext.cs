@@ -1,4 +1,5 @@
-﻿using BookingSalonHair.Models;
+﻿using BookingSalonHair.DTOs;
+using BookingSalonHair.Models;
 using Microsoft.EntityFrameworkCore;
 //using SalonBooking.API.Models;
 
@@ -13,6 +14,8 @@ namespace SalonBooking.API.Data
         public DbSet<Gallery> Galleries { get; set; }
         public DbSet<Service> Services { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<UserDTO> User { get; set; }
+
         public DbSet<WorkShift> WorkShifts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

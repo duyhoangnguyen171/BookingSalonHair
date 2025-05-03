@@ -169,4 +169,11 @@ E:\DATN\BookingSalonHair\BookingSalonHair\obj\Debug\net8.0\refint\BookingSalonHa
 E:\DATN\BookingSalonHair\BookingSalonHair\obj\Debug\net8.0\BookingSalonHair.pdb
 E:\DATN\BookingSalonHair\BookingSalonHair\obj\Debug\net8.0\BookingSalonHair.genruntimeconfig.cache
 E:\DATN\BookingSalonHair\BookingSalonHair\obj\Debug\net8.0\ref\BookingSalonHair.dll
+E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\admin\build\asset-manifest.json
+E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\admin\build\manifest.json
+E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\admin\package-lock.json
+E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\admin\package.json
+E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\admin\public\manifest.json
+E:\DATN\BookingSalonHair\BookingSalonHair\obj\Debug\net8.0\BookingSalonHair.sourcelink.json
+E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\Newtonsoft.Json.dll
 E:\DATN\BookingSalonHair\BookingSalonHair\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

@@ -1,0 +1,281 @@
+/* Add these styles to your CSS file */
+.overflow-x-auto {
+  overflow-x: auto;
+}
+
+.min-w-full {
+  min-width: 100%;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.border-collapse {
+  border-collapse: collapse;
+}
+
+.border {
+  border-width: 1px;
+  border-style: solid;
+}
+
+.border-gray-300 {
+  border-color: #d1d5db;
+}
+
+.p-2 {
+  padding: 0.5rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.bg-red-500 {
+  background-color: #ef4444;
+}
+
+.text-white {
+  color: white;
+}
+
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+.rounded {
+  border-radius: 0.25rem;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden; /* Prevent horizontal scrolling on body */
+}
+
+code {
+  font-family: Consolas, "Courier New", monospace;
+}
+
+/* Admin Layout */
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+}
+
+/* Sidebar Styles */
+.admin-sidebar {
+  width: 250px;
+  background-color: #2c3e50;
+  color: white;
+  padding: 20px 0; /* Reduced padding */
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0px 10px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  overflow-y: auto;
+}
+.sidebar{
+  width: 300px;
+  background-color: #374650;
+}
+.admin-sidebar h2 {
+  font-size: 1.5rem;
+  margin: 0 0 20px 15px; /* Add left margin instead of all-around padding */
+  font-weight: 600;
+  color: #34abc9;
+  
+}
+
+.nav-item {
+  color: #ecf0f1;
+  text-decoration: none;
+  font-size: 1.1rem;
+  padding: 10px 15px; /* Add horizontal padding */
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: all 0.3s;
+  margin: 2px 5px;
+}
+
+.nav-item svg {
+  margin-right: 10px;
+}
+
+.nav-item:hover {
+  background-color: #3498db;
+  color: white;
+}
+
+.nav-item.active {
+  background-color: #2980b9;
+  font-weight: bold;
+}
+
+/* Content Area */
+.admin-content {
+  flex: 1;
+  padding: 20px;
+  box-sizing: border-box;
+  width: calc(100% - 250px); /* Ensure content takes remaining width */
+  overflow-x: auto; /* Allow horizontal scrolling in content area if needed */
+}
+
+.logout-btn {
+  padding: 10px 20px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  cursor: pointer;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  z-index: 20;
+}
+
+.logout-btn:hover {
+  background-color: #d32f2f;
+}
+
+/* User Table Styles */
+.users-container {
+  width: 100%;
+  padding-bottom: 20px;
+}
+
+.users-container h2 {
+  margin-bottom: 20px;
+}
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px; /* Ensure table has a minimum width */
+}
+
+.users-table th,
+.users-table td {
+  border: 1px solid #ddd;
+  padding: 12px 15px;
+  text-align: left;
+}
+
+.users-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+  position: sticky;
+  top: 0;
+}
+
+.users-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.users-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+.id-column {
+  width: 80px;
+  min-width: 80px;
+}
+
+.delete-btn {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.delete-btn:hover {
+  background-color: #d32f2f;
+}
+
+.loading,
+.error,
+.no-data {
+  text-align: center;
+  padding: 30px;
+  color: #666;
+  font-size: 16px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .admin-sidebar {
+    width: 200px;
+    
+  }
+
+  .admin-content {
+    margin-left: 200px;
+    width: calc(100% - 200px);
+  }
+
+  .nav-item {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .admin-sidebar {
+    width: 60px;
+    padding: 15px 0;
+  }
+
+  .admin-sidebar h2 {
+    font-size: 0;
+    margin: 0;
+    height: 40px;
+  }
+
+  .nav-item {
+    padding: 15px 0;
+    justify-content: center;
+  }
+
+  .nav-item svg {
+    margin-right: 0;
+  }
+
+  .nav-item span {
+    display: none;
+  }
+
+  .admin-content {
+    margin-left: 60px;
+    width: calc(100% - 60px);
+    padding: 15px;
+  }
+}

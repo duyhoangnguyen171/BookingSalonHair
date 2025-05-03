@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SalonBooking.API.Data;
+using System.Security.Claims;
 
 namespace BookingSalonHair.Controllers
 {
@@ -22,15 +23,19 @@ namespace BookingSalonHair.Controllers
 
         // GET: api/Appointments
         [HttpGet]
-        [Authorize]   // Chỉ người đã đăng nhập mới được xem
+        [Authorize]
         public async Task<ActionResult<IEnumerable<Appointment>>> GetAppointments()
         {
-            return await _context.Appointments
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Lấy userId từ Claims
+            var appointments = await _context.Appointments
+                .Where(a => a.CustomerId.ToString() == userId || User.IsInRole("admin") || User.IsInRole("staff"))
                 .Include(a => a.Customer)
-                .Include(a => a.Staff)      // Bao gồm thông tin khách hàng
+                .Include(a => a.Staff)
                 .Include(a => a.Service)
                 .Include(a => a.WorkShift)
                 .ToListAsync();
+
+            return appointments;
         }
 
         // GET: api/Appointments/5
@@ -38,6 +43,7 @@ namespace BookingSalonHair.Controllers
         [Authorize]
         public async Task<ActionResult<Appointment>> GetAppointment(int id)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var appointment = await _context.Appointments
                 .Include(a => a.Customer)
                 .Include(a => a.Staff)
@@ -48,6 +54,10 @@ namespace BookingSalonHair.Controllers
             if (appointment == null)
                 return NotFound();
 
+            // Kiểm tra quyền truy cập
+            if (appointment.CustomerId.ToString() != userId && !User.IsInRole("admin") && !User.IsInRole("staff"))
+                return Forbid(); // Chỉ admin, staff hoặc người tạo mới có quyền truy cập
+
             return appointment;
         }
 
@@ -56,7 +66,15 @@ namespace BookingSalonHair.Controllers
         [Authorize(Roles = "staff,admin,customer")]
         public async Task<ActionResult<Appointment>> PostAppointment(Appointment appointment)
         {
-            // Giả sử client gửi đầy đủ thông tin (bao gồm các FK: UserId, ServiceId, WorkShiftId)
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState); // Kiểm tra tính hợp lệ của dữ liệu
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Nếu là customer, chỉ cho phép tạo cuộc hẹn cho chính mình
+            if (User.IsInRole("customer") && appointment.CustomerId.ToString() != userId)
+                return Forbid();
+
             _context.Appointments.Add(appointment);
             await _context.SaveChangesAsync();
 
@@ -70,6 +88,17 @@ namespace BookingSalonHair.Controllers
         {
             if (id != appointment.Id)
                 return BadRequest();
+
+            // Kiểm tra quyền sửa chữa cuộc hẹn
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var existingAppointment = await _context.Appointments.FindAsync(id);
+
+            if (existingAppointment == null)
+                return NotFound();
+
+            // Chỉ admin hoặc staff đã được giao công việc mới có quyền sửa
+            if (existingAppointment.StaffId.ToString() != userId && !User.IsInRole("admin"))
+                return Forbid(); // Cấm truy cập
 
             _context.Entry(appointment).State = EntityState.Modified;
 
@@ -96,10 +125,52 @@ namespace BookingSalonHair.Controllers
             if (appointment == null)
                 return NotFound();
 
+            // Kiểm tra quyền xóa
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (appointment.StaffId.ToString() != userId && !User.IsInRole("admin"))
+                return Forbid(); // Chỉ admin hoặc staff đã được giao công việc mới có quyền xóa
+
             _context.Appointments.Remove(appointment);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
+        // PUT: api/Appointments/5/status
+        [HttpPut("{id}/status")]
+        [Authorize(Roles = "staff,admin")]
+        public async Task<IActionResult> UpdateAppointmentStatus(int id, AppointmentStatus status)
+        {
+            var appointment = await _context.Appointments.FindAsync(id);
+            if (appointment == null)
+                return NotFound(); // Nếu không tìm thấy lịch hẹn, trả về NotFound
+
+            // Kiểm tra quyền sửa chữa lịch hẹn
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Chỉ admin hoặc staff đã được giao công việc mới có quyền cập nhật trạng thái
+            if (appointment.StaffId.ToString() != userId && !User.IsInRole("admin"))
+                return Forbid(); // Cấm truy cập nếu không phải admin hoặc nhân viên đã giao công việc
+
+            // Cập nhật trạng thái lịch hẹn
+            appointment.Status = status;
+
+            // Lưu thay đổi vào cơ sở dữ liệu
+            _context.Entry(appointment).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync(); // Lưu thay đổi
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.Appointments.Any(e => e.Id == id))
+                    return NotFound();
+                throw;
+            }
+
+            return NoContent(); // Trả về HTTP 204 NoContent nếu thành công
+        }
+
     }
 }
+

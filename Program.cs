@@ -9,57 +9,54 @@ using BookingSalonHair.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ 1. Add DbContext
+// 1️⃣ Kết nối database (Sử dụng SqlServer)
 builder.Services.AddDbContext<SalonContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ✅ 2. Add Authentication
-//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//    .AddJwtBearer(options => {
-//        options.TokenValidationParameters = new TokenValidationParameters
-//        {
-//            ValidateIssuer = true,
-//            ValidateAudience = true,
-//            ValidateLifetime = true,
-//            ValidateIssuerSigningKey = true,
-//            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-//            ValidAudience = builder.Configuration["Jwt:Audience"],
-//            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-//        };
-//    });
+// 2️⃣ Cấu hình CORS cho ứng dụng React (port 3001)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:3001") // Cấu hình origin cho ứng dụng React
+              .AllowAnyHeader()                  // Cho phép bất kỳ header nào
+              .AllowAnyMethod();                  // Cho phép bất kỳ method HTTP nào
+    });
+});
+
+// 3️⃣ Cấu hình JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options => {
+    .AddJwtBearer(options =>
+    {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true,                    // Kiểm tra Issuer có hợp lệ không
-            ValidateAudience = true,                  // Kiểm tra Audience có hợp lệ không
-            ValidateLifetime = true,                  // Kiểm tra token có hết hạn không
-            ValidateIssuerSigningKey = true,          // Kiểm tra key ký có hợp lệ không
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],   // Cấu hình Issuer
             ValidAudience = builder.Configuration["Jwt:Audience"], // Cấu hình Audience
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])), // Key bí mật
-            //RoleClaimType = "role"
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])) // Cấu hình Signing Key
         };
 
-        // Lọc lỗi nếu token không hợp lệ hoặc không xác thực được
         options.Events = new JwtBearerEvents
         {
             OnAuthenticationFailed = context =>
             {
-                Console.WriteLine("Token authentication failed: " + context.Exception.Message);
+                Console.WriteLine("❌ Token không hợp lệ: " + context.Exception.Message);  // Xử lý lỗi khi token không hợp lệ
                 return Task.CompletedTask;
             },
             OnForbidden = context =>
             {
-                Console.WriteLine("Access forbidden: " + context.Request.Path);
+                Console.WriteLine("⛔ Truy cập bị chặn tại: " + context.Request.Path);  // Xử lý lỗi khi quyền truy cập bị cấm
                 return Task.CompletedTask;
             }
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization();  // Thêm Authorization service để xác thực quyền truy cập
 
-// ✅ 3. Register Services (DI)
+// 4️⃣ Cấu hình Dependency Injection cho các service
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
@@ -67,8 +64,12 @@ builder.Services.AddScoped<IServiceService, ServiceService>();
 builder.Services.AddScoped<IWorkShiftService, WorkShiftService>();
 builder.Services.AddScoped<IContactService, ContactService>();
 
-// ✅ 4. Swagger & Controller
-builder.Services.AddControllers();
+// 5️⃣ Cấu hình Swagger và JWT Bearer cho Swagger UI
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -78,7 +79,7 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1"
     });
 
-    // 🔐 Thêm hỗ trợ JWT Bearer vào Swagger
+    // 🔐 JWT Bearer config cho Swagger UI
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -86,7 +87,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Nhập token vào đây: Bearer {your token}"
+        Description = "Nhập token: Bearer {token}"
     });
 
     options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
@@ -107,18 +108,22 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// ✅ 5. Configure Middleware
+// 6️⃣ Middleware pipeline
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwagger();                // Kích hoạt Swagger
+    app.UseSwaggerUI();              // Kích hoạt Swagger UI
 }
 
-app.UseHttpsRedirection();
+app.UseHttpsRedirection();          // Redirect tất cả request HTTP về HTTPS
 
-app.UseAuthentication();  // ✅ PHẢI ĐẶT TRƯỚC UseAuthorization
-app.UseAuthorization();
+// ⚠️ Phải đúng thứ tự này
+app.UseCors("AllowReactApp");       // 🟡 CORS phải được áp dụng trước Authentication
+app.UseAuthentication();            // 🟡 Authentication phải được áp dụng trước Authorization
+app.UseAuthorization();             // 🟡 Authorization
 
-app.MapControllers();
+app.MapControllers();               // Ánh xạ các API Controllers
 
-app.Run();
+app.Run();  // Chạy ứng dụng
+
+

@@ -3,6 +3,14 @@ using BookingSalonHair.Models;
 
 namespace BookingSalonHair.Models
 {
+    public enum AppointmentStatus
+    {
+        Pending = 0,      // Chờ duyệt
+        Accepted = 1,     // Đã nhận lịch
+        InProgress = 2,   // Đang thực hiện
+        Completed = 3,    // Đã hoàn thành
+        Canceled = 4      // Đã hủy
+    }
     public class Appointment
     {
         public int Id { get; set; }
@@ -24,5 +32,8 @@ namespace BookingSalonHair.Models
         // Ca làm việc (nếu có)
         public int? WorkShiftId { get; set; }
         public WorkShift WorkShift { get; set; }
+
+        // Trạng thái của lịch hẹn
+        public AppointmentStatus Status { get; set; }
     }
 }
