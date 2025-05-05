@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BookingSalonHair.DTOs;
 using BookingSalonHair.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +24,7 @@ namespace BookingSalonHair.Controllers
 
         // GET: api/WorkShifts
         [HttpGet]
+        [Authorize(Roles = "admin,staff")]
         public async Task<ActionResult<IEnumerable<WorkShift>>> GetWorkShifts()
         {
             return await _context.WorkShifts
@@ -52,7 +54,7 @@ namespace BookingSalonHair.Controllers
             return CreatedAtAction(nameof(GetWorkShift), new { id = workShift.Id }, workShift);
         }
 
-        // PUT: api/WorkShifts/5
+        // PUT: api/WorkShifts/id
         [HttpPut("{id}")]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> PutWorkShift(int id, WorkShift workShift)
@@ -74,7 +76,7 @@ namespace BookingSalonHair.Controllers
             return NoContent();
         }
 
-        // DELETE: api/WorkShifts/5
+        // DELETE: api/WorkShifts/id
         [HttpDelete("{id}")]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> DeleteWorkShift(int id)
@@ -86,5 +88,102 @@ namespace BookingSalonHair.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+
+        // POST: api/WorkShifts/by-type?type=morning
+        [HttpPost("by-type")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> CreateWorkShiftByType([FromBody] CreateWorkShiftDto dto)
+        {
+            // Lấy thời gian ca làm dựa vào ShiftType (sử dụng enum)
+            var (start, end) = dto.ShiftType switch
+            {
+                ShiftType.Morning => (new TimeSpan(8, 0, 0), new TimeSpan(12, 0, 0)),
+                ShiftType.Afternoon => (new TimeSpan(13, 0, 0), new TimeSpan(17, 0, 0)),
+                ShiftType.Evening => (new TimeSpan(18, 0, 0), new TimeSpan(22, 0, 0)),
+                _ => (TimeSpan.Zero, TimeSpan.Zero)
+            };
+
+            if (start == TimeSpan.Zero && end == TimeSpan.Zero)
+                return BadRequest("Loại ca làm không hợp lệ.");
+
+            // Lấy DayOfWeek từ ShiftType (hoặc người dùng có thể cung cấp trực tiếp)
+            DayOfWeek dayOfWeek = dto.DayOfWeek; // Bạn có thể tính toán lại nếu muốn dựa trên ShiftType
+
+            // Tạo ca làm mới với MaxUsers và DayOfWeek từ DTO
+            var workShift = new WorkShift
+            {
+                Name = dto.Name,
+                ShiftType = dto.ShiftType,
+                StartTime = start,
+                EndTime = end,
+                MaxUsers = dto.MaxUsers, // Sử dụng số người tối đa từ DTO
+                DayOfWeek = dayOfWeek // Lưu lại DayOfWeek từ DTO
+            };
+
+            _context.WorkShifts.Add(workShift);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = $"Đã tạo ca làm {dto.ShiftType} vào ngày {dayOfWeek}",
+                workShift
+            });
+        }
+
+
+
+        // POST: api/WorkShifts/Register?shiftId=1&staffId=123
+        [HttpPost("Register")]
+        [Authorize(Roles = "staff, admin")]  // Cả staff và admin đều có quyền gọi API này
+        public async Task<IActionResult> RegisterWorkShift([FromQuery] int shiftId, [FromQuery] int staffId, [FromQuery] int? customerId = null)
+        {
+            var workShift = await _context.WorkShifts
+                .Include(w => w.Appointments)
+                .FirstOrDefaultAsync(w => w.Id == shiftId);
+
+            if (workShift == null)
+                return NotFound("Ca làm không tồn tại.");
+
+            // Kiểm tra quyền của người gọi API (staff hoặc admin)
+            var isAdmin = User.IsInRole("admin");
+
+            // Kiểm tra nếu người gọi là staff, thì phải có chỗ trống
+            if (!isAdmin && workShift.Appointments.Count >= workShift.MaxUsers)
+            {
+                return BadRequest("Số lượng người đăng ký cho ca làm này đã đầy.");
+            }
+
+            // Nếu chỉ đăng ký ca làm cho nhân viên (không có khách hàng), thì không cần customerId
+            if (customerId == null)
+            {
+                var appointment = new Appointment
+                {
+                    WorkShiftId = workShift.Id,
+                    StaffId = staffId
+                };
+
+                _context.Appointments.Add(appointment);
+                await _context.SaveChangesAsync();
+
+                return Ok("Đăng ký ca làm thành công.");
+            }
+            else
+            {
+                // Nếu đăng ký làm tóc, cần có cả StaffId và CustomerId
+                var appointment = new Appointment
+                {
+                    WorkShiftId = workShift.Id,
+                    StaffId = staffId,
+                    CustomerId = customerId.Value // customerId phải có giá trị hợp lệ
+                };
+
+                _context.Appointments.Add(appointment);
+                await _context.SaveChangesAsync();
+
+                return Ok("Đăng ký lịch làm tóc thành công.");
+            }
+        }
+
+
     }
 }

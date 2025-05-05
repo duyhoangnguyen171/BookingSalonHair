@@ -731,6 +731,135 @@
         }
       }
     },
+    "/api/UserWorkShift/{userId}": {
+      "get": {
+        "tags": [
+          "UserWorkShift"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkShift"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkShift"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkShift"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/UserWorkShift": {
+      "post": {
+        "tags": [
+          "UserWorkShift"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserWorkShiftDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserWorkShiftDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserWorkShiftDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserWorkShiftDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserWorkShiftDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserWorkShiftDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/UserWorkShift/{userId}/{workShiftId}": {
+      "delete": {
+        "tags": [
+          "UserWorkShift"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "workShiftId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/WeatherForecast": {
       "get": {
         "tags": [
@@ -954,6 +1083,75 @@
           }
         }
       }
+    },
+    "/api/WorkShifts/by-type": {
+      "post": {
+        "tags": [
+          "WorkShifts"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkShiftDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkShiftDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkShiftDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/WorkShifts/Register": {
+      "post": {
+        "tags": [
+          "WorkShifts"
+        ],
+        "parameters": [
+          {
+            "name": "shiftId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "staffId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "customerId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -975,21 +1173,24 @@
           },
           "customerId": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "customer": {
             "$ref": "#/components/schemas/User"
           },
           "staffId": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "staff": {
             "$ref": "#/components/schemas/User"
           },
           "serviceId": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "service": {
             "$ref": "#/components/schemas/Service"
@@ -1035,6 +1236,26 @@
             "nullable": true
           },
           "userId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateWorkShiftDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "shiftType": {
+            "$ref": "#/components/schemas/ShiftType"
+          },
+          "dayOfWeek": {
+            "$ref": "#/components/schemas/DayOfWeek"
+          },
+          "maxUsers": {
             "type": "integer",
             "format": "int32"
           }
@@ -1148,6 +1369,15 @@
         },
         "additionalProperties": false
       },
+      "ShiftType": {
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
       "User": {
         "type": "object",
         "properties": {
@@ -1175,10 +1405,10 @@
             "type": "string",
             "nullable": true
           },
-          "appointments": {
+          "userWorkShifts": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Appointment"
+              "$ref": "#/components/schemas/UserWorkShift"
             },
             "nullable": true
           },
@@ -1186,6 +1416,20 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Gallery"
+            },
+            "nullable": true
+          },
+          "customerAppointments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Appointment"
+            },
+            "nullable": true
+          },
+          "staffAppointments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Appointment"
             },
             "nullable": true
           }
@@ -1214,6 +1458,48 @@
           "role": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserWorkShift": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "workShiftId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "workShift": {
+            "$ref": "#/components/schemas/WorkShift"
+          },
+          "registeredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserWorkShiftDTO": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "workShiftId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "registeredAt": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -1248,6 +1534,9 @@
             "type": "integer",
             "format": "int32"
           },
+          "shiftType": {
+            "$ref": "#/components/schemas/ShiftType"
+          },
           "name": {
             "type": "string",
             "nullable": true
@@ -1269,6 +1558,17 @@
           },
           "dayOfWeek": {
             "$ref": "#/components/schemas/DayOfWeek"
+          },
+          "maxUsers": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "userWorkShifts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserWorkShift"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false

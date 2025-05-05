@@ -6,7 +6,7 @@ namespace BookingSalonHair.Models
         public int Id { get; set; }
         public string Name { get; set; }
         public decimal Price { get; set; }
-
+       
         public ICollection<Appointment>? Appointments { get; set; }
         public string Description { get; set; }
     }

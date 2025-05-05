@@ -1,46 +1,23 @@
-﻿using SalonBooking.API.Data;
+﻿using BookingSalonHair.Models;
 using System.Text.Json.Serialization;
-namespace BookingSalonHair.Models
+
+public class User
 {
-    //public class User
-    //{
-    //    public int Id { get; set; }
-    //    public string FullName { get; set; }
-    //    public string Email { get; set; }
-    //    public string PasswordHash { get; set; }
-    //    public string Phone { get; set; }
-    //    private string role;
-    //    public string Role { get; set; }
-    //    public string Role
-    //    {
-    //        get
-    //        {
-    //            return role.ToLower();
-    //        }
-    //        set
-    //        {
-    //            role = value;
-    //        }
-    //    } // "Admin", "Staff", "Customer"
+    public int Id { get; set; }
+    public string FullName { get; set; }
+    public string Email { get; set; }
+    public string PasswordHash { get; set; }
+    public string Phone { get; set; }
+    public string Role { get; set; } = "Customer";
 
-    //    public ICollection<Contact> Contacts { get; set; }  
-    //    public ICollection<Appointment> Appointments { get; set; } 
-    //    public ICollection<Gallery> Galleries { get; set; }
-    //}
-    public class User
-    {
-        public int Id { get; set; }
-        public string FullName { get; set; }
-        public string Email { get; set; }
-        public string PasswordHash { get; set; }
-        public string Phone { get; set; }
-        public string Role { get; set; }
+    [JsonIgnore]
+    public ICollection<Contact> Contacts { get; set; } = new List<Contact>();
+    public ICollection<UserWorkShift> UserWorkShifts { get; set; } = new List<UserWorkShift>();
+    public ICollection<Gallery> Galleries { get; set; } = new List<Gallery>();
 
-        // Đánh dấu [JsonIgnore] để ngừng serialize Contacts trong User
-        [JsonIgnore]
-        public ICollection<Contact> Contacts { get; set; } = null;
+    // Khách hàng đã đặt lịch
+    public ICollection<Appointment> CustomerAppointments { get; set; } = new List<Appointment>();
 
-        public ICollection<Appointment> Appointments { get; set; }
-        public ICollection<Gallery> Galleries { get; set; }
-    }
+    // Lịch làm việc của nhân viên
+    public ICollection<Appointment> StaffAppointments { get; set; } = new List<Appointment>();
 }

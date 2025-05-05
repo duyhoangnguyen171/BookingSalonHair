@@ -20,4 +20,3 @@ export const getUsers = async () => {
 };
 
 export default api;  // Xuất api instance để sử dụng lại
-23l;p'

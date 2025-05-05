@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, Button, Spinner } from 'react-bootstrap';
-import { getUserById } from '../../services/UserService'; // Import API function
+import React, { useState, useEffect } from "react";
+import { Modal, Button, Spinner } from "react-bootstrap";
+import { getUserById } from "../../services/UserService"; // Import API function
 
 const UserView = ({ show, onHide, userId }) => {
   const [user, setUser] = useState(null);
@@ -17,7 +17,7 @@ const UserView = ({ show, onHide, userId }) => {
           setLoading(false);
         })
         .catch((err) => {
-          setError('Failed to fetch user data');
+          setError("Failed to fetch user data");
           setLoading(false);
         });
     }
@@ -61,18 +61,23 @@ const UserView = ({ show, onHide, userId }) => {
         {user && (
           <div>
             <img
-              src={user.imageUrl || 'https://www.w3schools.com/w3images/avatar2.png'}
+              src={
+                user.imageUrl ||
+                "https://www.w3schools.com/w3images/avatar2.png"
+              }
               alt={`${user.firstName} ${user.lastName}`}
-              style={{ width: '100px', height: '100px', borderRadius: '50%' }}
+              style={{ width: "100px", height: "100px", borderRadius: "50%" }}
             />
             <div>
-              <h5>{user.firstName} {user.lastName}</h5>
+              <h5>
+                {user.firstName} {user.lastName}
+              </h5>
               <p>Email: {user.email}</p>
               <p>Mobile: {user.mobile}</p>
               <p>Department: {user.department}</p>
               <p>Gender: {user.gender}</p>
               <p>Date of Birth: {user.dateOfBirth}</p>
-              <p>Permanent: {user.isPermanent ? 'Yes' : 'No'}</p>
+              <p>Permanent: {user.isPermanent ? "Yes" : "No"}</p>
             </div>
           </div>
         )}

@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import AppointmentService from '../../services/AppointmentService';
-import { Button, Stack } from '@mui/material';
-import AppointmentAdd from './AppointmentAdd'; // Import modal thêm lịch hẹn
-import AppointmentEdit from './AppointmentEdit'; // Import modal chỉnh sửa lịch hẹn
+import React, { useEffect, useState } from "react";
+import AppointmentService from "../../services/AppointmentService";
+import { Button, Stack } from "@mui/material";
+import AppointmentAdd from "./AppointmentAdd"; // Import modal thêm lịch hẹn
+import AppointmentEdit from "./AppointmentEdit"; // Import modal chỉnh sửa lịch hẹn
 
 export const Appointment = () => {
   const [appointments, setAppointments] = useState([]);
@@ -15,24 +15,24 @@ export const Appointment = () => {
 
   useEffect(() => {
     AppointmentService.getAll()
-      .then(res => {
+      .then((res) => {
         setAppointments(res.data.$values);
         setLoading(false);
       })
-      .catch(err => {
-        setError('Không thể tải dữ liệu cuộc hẹn');
+      .catch((err) => {
+        setError("Không thể tải dữ liệu cuộc hẹn");
         setLoading(false);
       });
   }, []);
 
   const getStatusText = (status) => {
     const statusMap = {
-      1: 'Chờ xác nhận',
-      2: 'Đã xác nhận',
-      3: 'Đã hoàn thành',
-      4: 'Đã hủy',
+      1: "Chờ xác nhận",
+      2: "Đã xác nhận",
+      3: "Đã hoàn thành",
+      4: "Đã hủy",
     };
-    return statusMap[status] || 'Chưa xác định';
+    return statusMap[status] || "Chưa xác định";
   };
 
   const formatDate = (date) => {
@@ -41,7 +41,9 @@ export const Appointment = () => {
   };
 
   const handleEdit = (appointmentId) => {
-    const appointmentToEdit = appointments.find(app => app.id === appointmentId); // Lấy dữ liệu cuộc hẹn cần chỉnh sửa
+    const appointmentToEdit = appointments.find(
+      (app) => app.id === appointmentId
+    ); // Lấy dữ liệu cuộc hẹn cần chỉnh sửa
     setSelectedAppointment(appointmentToEdit); // Lưu dữ liệu vào state
     setSelectedAppointmentId(appointmentId); // Lưu ID cuộc hẹn
     setOpenEditDialog(true); // Mở modal chỉnh sửa
@@ -70,7 +72,7 @@ export const Appointment = () => {
   }
 
   if (error) {
-    return <div style={{ color: 'red' }}>{error}</div>;
+    return <div style={{ color: "red" }}>{error}</div>;
   }
 
   return (
@@ -107,9 +109,15 @@ export const Appointment = () => {
             {appointments.map((app, index) => (
               <tr key={app.id}>
                 <th scope="row">{index + 1}</th>
-                <td>{app.customer.fullName}</td>
+                <td>
+                  {app.customer ? app.customer.fullName : "Chưa có khách hàng"}
+                </td>{" "}
+                {/* Kiểm tra nếu app.customer tồn tại */}
                 <td>{formatDate(app.appointmentDate)}</td>
-                <td>{app.service.name}</td>
+                <td>
+                  {app.service ? app.service.name : "Chưa có dịch vụ"}
+                </td>{" "}
+                {/* Kiểm tra nếu app.service tồn tại */}
                 <td>{getStatusText(app.status)}</td>
                 <td>
                   <Stack direction="row" spacing={1}>

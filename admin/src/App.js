@@ -22,6 +22,10 @@ import AppointmentEdit from "./modules/appointments/AppointmentEdit";
 import ServiceAdd from "./modules/services/ServiceAdd";
 import ServiceEdit from "./modules/services/ServiceEdit";
 
+import WorkshiftCreate from "./modules/workshifts/WorkShiftCreate";
+import WorkShiftEdit from "./modules/workshifts/WorkShiftEdit";
+import RegisterShift from "./modules/workshifts/RegisterShift";
+
 const App = () => {
   return (
     <Router>
@@ -44,6 +48,10 @@ const App = () => {
             <Route path="appointments/edit" element={<AppointmentEdit />} />
             <Route path="services/add" element={<ServiceAdd />} />
             <Route path="services/edit" element={<ServiceEdit />} />
+
+            <Route path="workshifts/create" element={<WorkshiftCreate />} />
+            <Route path="workshifts/edit/:id" element={<WorkShiftEdit />} />
+            <Route path="workshifts/register" element={<RegisterShift />} />
           </Route>
         </Route>
 

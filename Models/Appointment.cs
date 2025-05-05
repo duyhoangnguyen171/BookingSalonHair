@@ -15,18 +15,18 @@ namespace BookingSalonHair.Models
     {
         public int Id { get; set; }
         public DateTime AppointmentDate { get; set; }
-        public string Notes { get; set; }
+        public string? Notes { get; set; }
 
         // Quan hệ đến người đặt lịch (customer)
-        public int CustomerId { get; set; }
+        public int? CustomerId { get; set; }
         public User Customer { get; set; }
 
         // Quan hệ đến nhân viên phục vụ (staff)
-        public int StaffId { get; set; }
+        public int? StaffId { get; set; }
         public User Staff { get; set; }
 
         // Dịch vụ được chọn
-        public int ServiceId { get; set; }
+        public int? ServiceId { get; set; }
         public Service Service { get; set; }
 
         // Ca làm việc (nếu có)

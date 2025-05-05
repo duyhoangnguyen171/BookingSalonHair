@@ -338,7 +338,7 @@
     "Parameters": [],
     "ReturnTypes": [
       {
-        "Type": "System.Collections.Generic.IEnumerable\u00601[[BookingSalonHair.Models.User, BookingSalonHair, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[User, BookingSalonHair, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -364,7 +364,7 @@
     ],
     "ReturnTypes": [
       {
-        "Type": "BookingSalonHair.Models.User",
+        "Type": "User",
         "MediaTypes": [
           "text/plain",
           "application/json",
@@ -427,6 +427,79 @@
       {
         "Name": "userDto",
         "Type": "BookingSalonHair.DTOs.UserDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "UserWorkShiftController",
+    "Method": "AssignUserToWorkShift",
+    "RelativePath": "api/UserWorkShift",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userWorkShiftDTO",
+        "Type": "BookingSalonHair.DTOs.UserWorkShiftDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "BookingSalonHair.DTOs.UserWorkShiftDTO",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "UserWorkShiftController",
+    "Method": "GetWorkShiftsByUserId",
+    "RelativePath": "api/UserWorkShift/{userId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[BookingSalonHair.Models.WorkShift, BookingSalonHair, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "UserWorkShiftController",
+    "Method": "RemoveUserFromWorkShift",
+    "RelativePath": "api/UserWorkShift/{userId}/{workShiftId}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "workShiftId",
+        "Type": "System.Int32",
         "IsRequired": true
       }
     ],
@@ -537,6 +610,48 @@
         "Name": "id",
         "Type": "System.Int32",
         "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BookingSalonHair.Controllers.WorkShiftsController",
+    "Method": "CreateWorkShiftByType",
+    "RelativePath": "api/WorkShifts/by-type",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BookingSalonHair.DTOs.CreateWorkShiftDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BookingSalonHair.Controllers.WorkShiftsController",
+    "Method": "RegisterWorkShift",
+    "RelativePath": "api/WorkShifts/Register",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "shiftId",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "staffId",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "customerId",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []

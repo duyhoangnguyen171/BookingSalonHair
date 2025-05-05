@@ -1,52 +1,57 @@
-import DeleteIcon from "@mui/icons-material/Delete";
+import React, { useEffect, useState } from "react";
 import {
   Button,
-  IconButton,
   List,
   ListItem,
   ListItemText,
   Stack,
-  TextField,
   Typography,
+  Paper,
+  Box,
+  Divider,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
 import WorkShiftService from "../../services/WorkShiftService";
 
 const Workshift = () => {
   const [shifts, setShifts] = useState([]);
-  const [newShift, setNewShift] = useState("");
-  const [shiftDate, setShiftDate] = useState("");
+  const [role, setRole] = useState("");
+  const [userId, setUserId] = useState("");
 
   useEffect(() => {
- 
-  //  console.log("Token:", JSON.parse(localStorage.token));
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Bạn chưa đăng nhập.");
+      return;
+    }
 
-        // Decode JWT để lấy role từ token
-        const payloadBase64 = localStorage.token.split('.')[1];
-        const payloadJson = atob(payloadBase64);
-        const payload = JSON.parse(payloadJson);
-        const role = payload["role"] || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-    // const role = localStorage.getItem("role");
+    const payloadBase64 = token.split(".")[1];
+    const payloadJson = atob(payloadBase64);
+    const payload = JSON.parse(payloadJson);
+    const userRole =
+      payload["role"] ||
+      payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+    const nameId =
+      payload["nameid"] ||
+      payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/name"];
 
-      const nameId = payload["nameid"] || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-
-    if (!role || !nameId) {
+    if (!userRole || !nameId) {
       alert("Thông tin người dùng không hợp lệ. Vui lòng đăng nhập lại.");
       return;
     }
 
-    if (role === "staff") {
-      loadBookedShifts(nameId);
-    } else if (role === "admin") {
-      loadShifts();
+    setRole(userRole);
+    setUserId(nameId);
+
+    if (userRole === "admin"||userRole === "staff" ) {
+     loadShifts(nameId);
+    } else if (userRole === "staff" ) {
+      loadBookedShifts();
     } else {
       alert("Bạn không có quyền truy cập vào trang này.");
     }
   }, []);
 
-  
   const loadShifts = async () => {
-    
     try {
       const response = await WorkShiftService.getAll();
       const data = response?.$values ?? response;
@@ -56,10 +61,8 @@ const Workshift = () => {
       setShifts([]);
     }
   };
- 
 
   const loadBookedShifts = async (staffId) => {
-
     try {
       const response = await WorkShiftService.getBookedByStaffId(staffId);
       const data = response?.$values ?? response;
@@ -81,103 +84,113 @@ const Workshift = () => {
     }
   };
 
-  const handleAddShift = async () => {
-    const userRole = localStorage.getItem("role");
-    if (userRole !== "staff" && userRole !== "admin") {
-      alert("Bạn không có quyền thêm ca làm.");
-      return;
-    }
+  const handleEditShift = (shift) => {
+    window.location.href = `http://localhost:3001/admin/workshifts/edit/${shift.id}`;
+  };
 
-    if (!newShift || !shiftDate) {
-      alert("Vui lòng nhập đầy đủ thông tin ca và ngày.");
-      return;
-    }
-
+  const handleRegisterShift = async (shiftId) => {
+    if (!userId) return;
     try {
-      await WorkShiftService.create({
-        name: newShift,
-        date: shiftDate,
-      });
-      setNewShift("");
-      setShiftDate("");
-
-      // Load lại ca làm phù hợp theo role
-      const userId = localStorage.getItem("userId");
-      if (userRole === "staff") {
-        loadBookedShifts(userId);
-      } else {
-        loadShifts();
-      }
+      await WorkShiftService.registerShift(userId, shiftId);
+      loadBookedShifts(userId);
     } catch (err) {
-      console.error("Error adding shift:", err);
-      alert("Lỗi khi thêm ca làm việc.");
+      console.error("Lỗi khi đăng ký ca làm:", err);
+      alert("Không thể đăng ký ca làm.");
     }
   };
 
+  const getDayName = (dayNumber) => {
+    const days = [
+      "Chủ Nhật",
+      "Thứ Hai",
+      "Thứ Ba",
+      "Thứ Tư",
+      "Thứ Năm",
+      "Thứ Sáu",
+      "Thứ Bảy",
+    ];
+    return days[dayNumber] || `Thứ ${dayNumber}`;
+  };
+
   return (
-    <div
-      style={{
-        backgroundColor: "white",
-        padding: 24,
-        margin: "80px auto",
-        maxWidth: 600,
-        borderRadius: 8,
-      }}
-    >
-      <Typography variant="h6" gutterBottom>
-        Danh sách ca làm
-      </Typography>
+    <Box sx={{ maxWidth: "auto", mx: "auto", mt: 4, px: 2 }}>
+      <Paper elevation={3} sx={{ p: 3 }}>
+        <Typography variant="h5" gutterBottom>
+          Danh sách ca làm
+        </Typography>
 
-      <List dense>
-        {shifts.length === 0 ? (
-          <Typography variant="body2" color="textSecondary">
-            Không có ca làm nào được tìm thấy.
-          </Typography>
-        ) : (
-          shifts.map((shift) => (
-            <ListItem
-              key={shift.id}
-              secondaryAction={
-                localStorage.getItem("role") === "admin" && (
-                  <IconButton
-                    edge="end"
-                    aria-label="delete"
-                    onClick={() => handleDeleteShift(shift.id)}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                )
-              }
-            >
-              <ListItemText
-                primary={shift.name}
-                secondary={`Thời gian: ${shift.startTime} - ${shift.endTime}, Thứ: ${shift.dayOfWeek}`}
-              />
-            </ListItem>
-          ))
+        {role === "admin" && (
+          <Button
+            variant="contained"
+            onClick={() =>
+              (window.location.href =
+                "http://localhost:3001/admin/workshifts/create")
+            }
+            sx={{ mb: 2 }}
+          >
+            Tạo ca làm
+          </Button>
         )}
-      </List>
 
-      <Stack spacing={2} mt={2}>
-        <TextField
-          label="Tên ca làm"
-          value={newShift}
-          onChange={(e) => setNewShift(e.target.value)}
-          fullWidth
-        />
-        <TextField
-          label="Ngày (YYYY-MM-DD)"
-          type="date"
-          InputLabelProps={{ shrink: true }}
-          value={shiftDate}
-          onChange={(e) => setShiftDate(e.target.value)}
-          fullWidth
-        />
-        <Button variant="contained" onClick={handleAddShift}>
-          Thêm ca
-        </Button>
-      </Stack>
-    </div>
+        <Divider sx={{ mb: 2 }} />
+
+        {shifts.length === 0 ? (
+          <Typography color="text.secondary">Không có ca làm nào.</Typography>
+        ) : (
+          <List>
+            {shifts.map((shift) => (
+              <ListItem
+                key={shift.id}
+                sx={{
+                  bgcolor: "#f9f9f9",
+                  mb: 1,
+                  borderRadius: 2,
+                  border: "1px solid #ddd",
+                }}
+              >
+                <ListItemText
+                  primary={<strong>{shift.name}</strong>}
+                  secondary={`Thời gian: ${shift.startTime} - ${shift.endTime}, Thứ: ${getDayName(
+                    shift.dayOfWeek
+                  )}, Số người tối đa: ${shift.maxUsers}`}
+                />
+                <Stack direction="row" spacing={1}>
+                  {role === "admin" && (
+                    <>
+                      <Button
+                        variant="outlined"
+                        color="warning"
+                        size="small"
+                        onClick={() => handleEditShift(shift)}
+                      >
+                        Sửa
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        size="small"
+                        onClick={() => handleDeleteShift(shift.id)}
+                      >
+                        Xoá
+                      </Button>
+                    </>
+                  )}
+                  {role === "staff" && !shift.booked && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => handleRegisterShift(shift.id)}
+                    >
+                      Đăng ký
+                    </Button>
+                  )}
+                </Stack>
+              </ListItem>
+            ))}
+          </List>
+        )}
+      </Paper>
+    </Box>
   );
 };
 
