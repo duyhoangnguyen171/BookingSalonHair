@@ -25,6 +25,7 @@ import ServiceEdit from "./modules/services/ServiceEdit";
 import WorkshiftCreate from "./modules/workshifts/WorkShiftCreate";
 import WorkShiftEdit from "./modules/workshifts/WorkShiftEdit";
 import RegisterShift from "./modules/workshifts/RegisterShift";
+import WorkShiftDetail from "./modules/workshifts/WorkShiftDetail";
 
 const App = () => {
   return (
@@ -52,6 +53,7 @@ const App = () => {
             <Route path="workshifts/create" element={<WorkshiftCreate />} />
             <Route path="workshifts/edit/:id" element={<WorkShiftEdit />} />
             <Route path="workshifts/register" element={<RegisterShift />} />
+            <Route path="workshifts/details/view/:shiftId" element={<WorkShiftDetail />} />
           </Route>
         </Route>
 

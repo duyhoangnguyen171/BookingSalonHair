@@ -1001,24 +1001,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/WorkShift"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WorkShift"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WorkShift"
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       },

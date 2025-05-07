@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import AppointmentService from "../../services/AppointmentService";
+import ServiceService from "../../services/Serviceservice";
 import { Button, Stack } from "@mui/material";
 import AppointmentAdd from "./AppointmentAdd"; // Import modal thêm lịch hẹn
 import AppointmentEdit from "./AppointmentEdit"; // Import modal chỉnh sửa lịch hẹn
 
 export const Appointment = () => {
   const [appointments, setAppointments] = useState([]);
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openAddDialog, setOpenAddDialog] = useState(false); // Quản lý modal thêm lịch hẹn
@@ -23,6 +25,9 @@ export const Appointment = () => {
         setError("Không thể tải dữ liệu cuộc hẹn");
         setLoading(false);
       });
+    ServiceService.getAll()
+      .then((res) => setServices(res.data.$values))
+      .catch(() => setError("Không thể tải dữ liệu dịch vụ"));
   }, []);
 
   const getStatusText = (status) => {
@@ -74,7 +79,6 @@ export const Appointment = () => {
   if (error) {
     return <div style={{ color: "red" }}>{error}</div>;
   }
-
   return (
     <div className="container mt-4">
       <h2 className="mb-4">Danh sách cuộc hẹn</h2>
@@ -115,8 +119,9 @@ export const Appointment = () => {
                 {/* Kiểm tra nếu app.customer tồn tại */}
                 <td>{formatDate(app.appointmentDate)}</td>
                 <td>
-                  {app.service ? app.service.name : "Chưa có dịch vụ"}
-                </td>{" "}
+                  {services.find((s) => s.id === app.serviceId)?.name ||
+                    "Không rõ"}
+                </td>
                 {/* Kiểm tra nếu app.service tồn tại */}
                 <td>{getStatusText(app.status)}</td>
                 <td>

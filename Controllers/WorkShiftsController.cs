@@ -32,17 +32,50 @@ namespace BookingSalonHair.Controllers
                 .ToListAsync();
         }
 
-        // GET: api/WorkShifts/5
+        // GET: api/WorkShifts/id
         [HttpGet("{id}")]
-        public async Task<ActionResult<WorkShift>> GetWorkShift(int id)
+        public async Task<IActionResult> GetWorkShift(int id)
         {
             var shift = await _context.WorkShifts
                 .Include(w => w.Appointments)
+                    .ThenInclude(a => a.Customer)
+                .Include(w => w.Appointments)
+                    .ThenInclude(a => a.Staff)
+                .Include(w => w.UserWorkShifts)
+                    .ThenInclude(uw => uw.User)
                 .FirstOrDefaultAsync(w => w.Id == id);
+
             if (shift == null)
                 return NotFound();
-            return shift;
+
+            var result = new WorkShiftDetailDTO
+            {
+                Id = shift.Id,
+                Name = shift.Name,
+                StartTime = shift.StartTime,
+                EndTime = shift.EndTime,
+                ShiftType = shift.ShiftType,
+                MaxUsers = shift.MaxUsers,
+                Appointments = shift.Appointments.Select(a => new WorkShiftAppointmentDTO
+                {
+                    Id = a.Id,
+                    ServiceId = a.ServiceId,
+                    CustomerName = a.Customer?.FullName,
+                    StaffId = a.StaffId,
+                    StaffName = a.Staff?.FullName
+                }).ToList(),
+                RegisteredStaffs = shift.UserWorkShifts.Select(u => new SimpleUserDTO
+                {
+                    Id = u.User.Id,
+                    FullName = u.User.FullName
+                }).ToList()
+            };
+
+            return Ok(result);
         }
+
+
+
 
         // POST: api/WorkShifts
         [HttpPost]

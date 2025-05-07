@@ -64,7 +64,7 @@ builder.Services.AddScoped<IServiceService, ServiceService>();
 builder.Services.AddScoped<IWorkShiftService, WorkShiftService>();
 builder.Services.AddScoped<IContactService, ContactService>();
 
-// 5️⃣ Cấu hình Swagger và JWT Bearer cho Swagger UI
+//Cấu hình Swagger và JWT Bearer cho Swagger UI
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {

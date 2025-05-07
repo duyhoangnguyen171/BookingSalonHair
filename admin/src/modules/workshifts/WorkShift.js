@@ -16,6 +16,7 @@ const Workshift = () => {
   const [shifts, setShifts] = useState([]);
   const [role, setRole] = useState("");
   const [userId, setUserId] = useState("");
+  const [selectedDay, setSelectedDay] = useState(""); // Thêm để lọc theo thứ
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -42,10 +43,8 @@ const Workshift = () => {
     setRole(userRole);
     setUserId(nameId);
 
-    if (userRole === "admin"||userRole === "staff" ) {
-     loadShifts(nameId);
-    } else if (userRole === "staff" ) {
-      loadBookedShifts();
+    if (userRole === "admin" || userRole === "staff") {
+      loadShifts(nameId);
     } else {
       alert("Bạn không có quyền truy cập vào trang này.");
     }
@@ -87,6 +86,10 @@ const Workshift = () => {
   const handleEditShift = (shift) => {
     window.location.href = `http://localhost:3001/admin/workshifts/edit/${shift.id}`;
   };
+  const handleViewDetails = (shiftId) => {
+    console.log("Shift ID:", shiftId); // Kiểm tra xem shift.id có giá trị hợp lệ không
+    window.location.href = `http://localhost:3001/admin/workshifts/details/view/${shiftId}`;
+  };
 
   const handleRegisterShift = async (shiftId) => {
     if (!userId) return;
@@ -119,6 +122,30 @@ const Workshift = () => {
           Danh sách ca làm
         </Typography>
 
+        {/* Dropdown lọc theo thứ */}
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle1">Lọc theo thứ:</Typography>
+          <select
+            value={selectedDay}
+            onChange={(e) => setSelectedDay(e.target.value)}
+            style={{
+              padding: "8px",
+              borderRadius: "4px",
+              border: "1px solid #ccc",
+              marginTop: "4px",
+            }}
+          >
+            <option value="">Tất cả</option>
+            <option value="1">Thứ Hai</option>
+            <option value="2">Thứ Ba</option>
+            <option value="3">Thứ Tư</option>
+            <option value="4">Thứ Năm</option>
+            <option value="5">Thứ Sáu</option>
+            <option value="6">Thứ Bảy</option>
+            <option value="0">Chủ Nhật</option>
+          </select>
+        </Box>
+
         {role === "admin" && (
           <Button
             variant="contained"
@@ -138,55 +165,77 @@ const Workshift = () => {
           <Typography color="text.secondary">Không có ca làm nào.</Typography>
         ) : (
           <List>
-            {shifts.map((shift) => (
-              <ListItem
-                key={shift.id}
-                sx={{
-                  bgcolor: "#f9f9f9",
-                  mb: 1,
-                  borderRadius: 2,
-                  border: "1px solid #ddd",
-                }}
-              >
-                <ListItemText
-                  primary={<strong>{shift.name}</strong>}
-                  secondary={`Thời gian: ${shift.startTime} - ${shift.endTime}, Thứ: ${getDayName(
-                    shift.dayOfWeek
-                  )}, Số người tối đa: ${shift.maxUsers}`}
-                />
-                <Stack direction="row" spacing={1}>
-                  {role === "admin" && (
-                    <>
-                      <Button
-                        variant="outlined"
-                        color="warning"
-                        size="small"
-                        onClick={() => handleEditShift(shift)}
-                      >
-                        Sửa
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        onClick={() => handleDeleteShift(shift.id)}
-                      >
-                        Xoá
-                      </Button>
-                    </>
-                  )}
-                  {role === "staff" && !shift.booked && (
+            {shifts
+              .filter((shift) =>
+                selectedDay === ""
+                  ? true
+                  : shift.dayOfWeek === parseInt(selectedDay)
+              )
+              .map((shift) => (
+                <ListItem
+                  key={shift.id}
+                  sx={{
+                    bgcolor: "#f9f9f9",
+                    mb: 1,
+                    borderRadius: 2,
+                    border: "1px solid #ddd",
+                  }}
+                >
+                  <ListItemText
+                    primary={<strong>{shift.name}</strong>}
+                    secondary={`Thời gian: ${shift.startTime} - ${
+                      shift.endTime
+                    }, Thứ: ${getDayName(shift.dayOfWeek)}, Số người tối đa: ${
+                      shift.maxUsers
+                    }`}
+                  />
+                  <Stack direction="row" spacing={1}>
                     <Button
                       variant="outlined"
                       size="small"
-                      onClick={() => handleRegisterShift(shift.id)}
+                      color="info"
+                      onClick={() => {
+                        console.log("Button clicked");
+                        handleViewDetails(shift.id);
+                      }}
                     >
-                      Đăng ký
+                      Xem
                     </Button>
-                  )}
-                </Stack>
-              </ListItem>
-            ))}
+
+                    {role === "admin" && (
+                      <>
+                        <Button
+                          variant="outlined"
+                          color="warning"
+                          size="small"
+                          onClick={() => handleEditShift(shift)}
+                        >
+                          Sửa
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          size="small"
+                          onClick={() => handleDeleteShift(shift.id)}
+                        >
+                          Xoá
+                        </Button>
+                      </>
+                    )}
+
+                    {(role === "staff" || role === "admin") &&
+                      !shift.booked && (
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => handleRegisterShift(shift.id)}
+                        >
+                          Đăng ký
+                        </Button>
+                      )}
+                  </Stack>
+                </ListItem>
+              ))}
           </List>
         )}
       </Paper>

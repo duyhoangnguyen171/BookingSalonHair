@@ -40,6 +40,19 @@ const WorkShiftService = {
       throw error;
     }
   },
+
+  assignStaff: async (shiftId, appointmentId, staffId) => {
+    try {
+      await axios.post(
+        `${API_URL}/${shiftId}/assign`,
+        { appointmentId, staffId },
+        getAuthHeader()
+      );
+    } catch (error) {
+      console.error("Lỗi khi gán nhân viên:", error);
+      throw error;
+    }
+  },
   // Đăng ký ca làm 
   registerShift: async (userId, shiftId) => {
     try {
