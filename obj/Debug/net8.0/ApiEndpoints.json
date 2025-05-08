@@ -506,6 +506,69 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "UserWorkShiftController",
+    "Method": "ApproveUserWorkShift",
+    "RelativePath": "api/UserWorkShift/Approve",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "workShiftId",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "UserWorkShiftController",
+    "Method": "RegisterSelfToWorkShift",
+    "RelativePath": "api/UserWorkShift/Register",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "registerWorkShiftDTO",
+        "Type": "BookingSalonHair.DTOs.RegisterWorkShiftDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "UserWorkShiftController",
+    "Method": "GetStaffNotRegisteredForWorkShift",
+    "RelativePath": "api/UserWorkShift/staff-not-registered/{workShiftId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "workShiftId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[User, BookingSalonHair, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
     "ContainingType": "BookingSalonHair.Controllers.WorkShiftsController",
     "Method": "GetWorkShifts",
     "RelativePath": "api/WorkShifts",

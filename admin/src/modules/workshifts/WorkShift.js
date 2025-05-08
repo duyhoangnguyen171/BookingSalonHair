@@ -10,9 +10,11 @@ import {
   Box,
   Divider,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import WorkShiftService from "../../services/WorkShiftService";
 
 const Workshift = () => {
+  const navigate = useNavigate();
   const [shifts, setShifts] = useState([]);
   const [role, setRole] = useState("");
   const [userId, setUserId] = useState("");
@@ -83,6 +85,9 @@ const Workshift = () => {
     }
   };
 
+  const handleRegisterShift = (shift) => {
+    navigate(`/admin/workshifts/register?shiftId=${shift.id}`);
+  };
   const handleEditShift = (shift) => {
     window.location.href = `http://localhost:3001/admin/workshifts/edit/${shift.id}`;
   };
@@ -91,16 +96,16 @@ const Workshift = () => {
     window.location.href = `http://localhost:3001/admin/workshifts/details/view/${shiftId}`;
   };
 
-  const handleRegisterShift = async (shiftId) => {
-    if (!userId) return;
-    try {
-      await WorkShiftService.registerShift(userId, shiftId);
-      loadBookedShifts(userId);
-    } catch (err) {
-      console.error("Lỗi khi đăng ký ca làm:", err);
-      alert("Không thể đăng ký ca làm.");
-    }
-  };
+  // const handleRegisterShift = async (shiftId) => {
+  //   if (!userId) return;
+  //   try {
+  //     await WorkShiftService.registerShift(userId, shiftId);
+  //     loadBookedShifts(userId);
+  //   } catch (err) {
+  //     console.error("Lỗi khi đăng ký ca làm:", err);
+  //     alert("Không thể đăng ký ca làm.");
+  //   }
+  // };
 
   const getDayName = (dayNumber) => {
     const days = [
@@ -228,7 +233,7 @@ const Workshift = () => {
                         <Button
                           variant="outlined"
                           size="small"
-                          onClick={() => handleRegisterShift(shift.id)}
+                          onClick={() =>  handleRegisterShift(shift)}
                         >
                           Đăng ký
                         </Button>

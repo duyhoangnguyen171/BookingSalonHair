@@ -1,76 +1,148 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import WorkShiftService from "../../services/WorkShiftService";
+import {
+  Box,
+  Typography,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Button,
+  Paper,
+  Fade,
+  Alert,
+} from "@mui/material";
 
-const RegisterShift = ({ staffId }) => {
-  const [shifts, setShifts] = useState([]);
-  const [selectedShift, setSelectedShift] = useState(null);
-  const [message, setMessage] = useState('');
+const RegisterShift = () => {
+  const [staffList, setStaffList] = useState([]);
+  const [shiftId, setShiftId] = useState();
+  const [selectedStaff, setSelectedStaff] = useState("");
+  const [message, setMessage] = useState("");
+  const [shiftDetails, setShiftDetails] = useState(null);
 
-  // Lấy danh sách ca làm từ API
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const shiftIdFromURL = searchParams.get("shiftId");
+
   useEffect(() => {
-    const fetchShifts = async () => {
+    if (shiftIdFromURL) {
+      setShiftId(Number(shiftIdFromURL));
+    }
+  }, [shiftIdFromURL]);
+
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get('/api/WorkShift/GetAvailableShifts'); // Giả sử bạn có API để lấy danh sách ca làm
-        setShifts(response.data);
+        if (shiftId) {
+          const shiftResponse = await WorkShiftService.getById(shiftId);
+          setShiftDetails(shiftResponse);
+
+          const staffResponse = await WorkShiftService.getStaffNotRegistered(shiftId);
+          setStaffList(staffResponse.$values || []);
+        }
       } catch (error) {
-        console.error("Có lỗi xảy ra khi lấy danh sách ca làm", error);
+        console.error("❌ Lỗi khi lấy dữ liệu:", error);
+        setMessage("Không thể lấy thông tin ca làm hoặc danh sách nhân viên.");
       }
     };
 
-    fetchShifts();
-  }, []);
+    fetchData();
+  }, [shiftId]);
 
-  // Xử lý đăng ký ca làm
   const handleRegisterShift = async (e) => {
     e.preventDefault();
 
-    if (!selectedShift) {
-      setMessage('Vui lòng chọn một ca làm.');
+    if (!selectedStaff) {
+      setMessage("Vui lòng chọn nhân viên.");
       return;
     }
 
     try {
-      const response = await axios.post('/api/WorkShift/Register', null, {
-        params: {
-          shiftId: selectedShift,
-          staffId: staffId,
-        },
-      });
-
-      setMessage(response.data);
+      const response = await WorkShiftService.registerShift(shiftId, selectedStaff);
+      setMessage(response.message || "Đăng ký ca làm thành công!");
     } catch (error) {
-      setMessage('Đã xảy ra lỗi khi đăng ký ca làm.');
+      setMessage("Đã xảy ra lỗi khi đăng ký ca làm.");
       console.error(error);
     }
   };
 
   return (
-    <div>
-      <h3>Đăng ký ca làm</h3>
-      <form onSubmit={handleRegisterShift}>
-        <div>
-          <label htmlFor="shift">Chọn ca làm: </label>
-          <select
-            id="shift"
-            onChange={(e) => setSelectedShift(Number(e.target.value))}
-            value={selectedShift || ''}
-          >
-            <option value="" disabled>Chọn ca làm</option>
-            {shifts.map(shift => (
-              <option key={shift.id} value={shift.id}>
-                {shift.name} - {shift.startTime} đến {shift.endTime}
-              </option>
-            ))}
-          </select>
-        </div>
+    <Box maxWidth="600px" margin="auto" padding={3}>
+  <Fade in={true} timeout={600}>
+    <Paper elevation={4} sx={{ padding: 3, borderRadius: 3 }}>
+      <Typography variant="h5" gutterBottom fontWeight="bold">
+        Đăng ký ca làm
+      </Typography>
 
-        <div>
-          <button type="submit">Đăng ký</button>
-        </div>
+      {shiftDetails ? (
+        <Box mb={2}>
+          <Typography variant="subtitle1">
+            <strong>Ca làm:</strong> {shiftDetails.name}
+          </Typography>
+          <Typography variant="subtitle1">
+            <strong>Thời gian:</strong>{" "}
+            {shiftDetails.startTime?.slice(0, 5)} - {shiftDetails.endTime?.slice(0, 5)}
+          </Typography>
+        </Box>
+      ) : (
+        <Typography>Đang tải thông tin ca làm...</Typography>
+      )}
+
+      <form onSubmit={handleRegisterShift}>
+        <FormControl fullWidth margin="normal">
+          <InputLabel>Chọn nhân viên</InputLabel>
+          <Select
+            value={selectedStaff}
+            onChange={(e) => setSelectedStaff(e.target.value)}
+            label="Chọn nhân viên"
+          >
+            <MenuItem value="">
+              <em>Chọn nhân viên</em>
+            </MenuItem>
+            {staffList.length > 0 ? (
+              staffList.map((staff) => (
+                <MenuItem key={staff.id} value={staff.id}>
+                  {staff.fullName}
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem value="" disabled>
+                Không có nhân viên nào
+              </MenuItem>
+            )}
+          </Select>
+        </FormControl>
+
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          sx={{
+            mt: 2,
+            width: "100%",
+            paddingY: 1.2,
+            fontWeight: "bold",
+            borderRadius: 2,
+            transition: "all 0.3s ease",
+            ":hover": {
+              backgroundColor: "#1565c0",
+            },
+          }}
+        >
+          Đăng ký ca làm
+        </Button>
       </form>
 
-      {message && <p>{message}</p>}
-    </div>
+      {message && (
+        <Alert severity="info" sx={{ mt: 3 }}>
+          {message}
+        </Alert>
+      )}
+    </Paper>
+  </Fade>
+</Box>
+
   );
 };
 

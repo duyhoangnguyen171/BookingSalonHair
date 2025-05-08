@@ -9,5 +9,7 @@
         public WorkShift WorkShift { get; set; }
 
         public DateTime RegisteredAt { get; set; } = DateTime.Now;
+        public bool IsApproved { get; set; } = false;
+
     }
 }

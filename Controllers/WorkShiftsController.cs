@@ -33,6 +33,7 @@ namespace BookingSalonHair.Controllers
         }
 
         // GET: api/WorkShifts/id
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetWorkShift(int id)
         {

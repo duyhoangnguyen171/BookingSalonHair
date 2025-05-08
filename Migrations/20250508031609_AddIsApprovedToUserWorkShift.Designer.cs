@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SalonBooking.API.Data;
 
@@ -11,9 +12,11 @@ using SalonBooking.API.Data;
 namespace BookingSalonHair.Migrations
 {
     [DbContext(typeof(SalonContext))]
-    partial class SalonContextModelSnapshot : ModelSnapshot
+    [Migration("20250508031609_AddIsApprovedToUserWorkShift")]
+    partial class AddIsApprovedToUserWorkShift
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -156,9 +159,6 @@ namespace BookingSalonHair.Migrations
 
                     b.Property<int>("WorkShiftId")
                         .HasColumnType("int");
-
-                    b.Property<bool>("IsApproved")
-                        .HasColumnType("bit");
 
                     b.Property<DateTime>("RegisteredAt")
                         .HasColumnType("datetime2");

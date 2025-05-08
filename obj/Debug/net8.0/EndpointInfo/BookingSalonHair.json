@@ -860,6 +860,116 @@
         }
       }
     },
+    "/api/UserWorkShift/Approve": {
+      "put": {
+        "tags": [
+          "UserWorkShift"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "workShiftId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/UserWorkShift/Register": {
+      "post": {
+        "tags": [
+          "UserWorkShift"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterWorkShiftDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterWorkShiftDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterWorkShiftDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/UserWorkShift/staff-not-registered/{workShiftId}": {
+      "get": {
+        "tags": [
+          "UserWorkShift"
+        ],
+        "parameters": [
+          {
+            "name": "workShiftId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/WeatherForecast": {
       "get": {
         "tags": [
@@ -1323,6 +1433,20 @@
         },
         "additionalProperties": false
       },
+      "RegisterWorkShiftDTO": {
+        "type": "object",
+        "properties": {
+          "workShiftId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "Service": {
         "type": "object",
         "properties": {
@@ -1465,6 +1589,9 @@
           "registeredAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "isApproved": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
