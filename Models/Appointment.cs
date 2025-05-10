@@ -1,39 +1,41 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 using BookingSalonHair.Models;
 
 namespace BookingSalonHair.Models
 {
     public enum AppointmentStatus
     {
-        Pending = 0,      // Chờ duyệt
-        Accepted = 1,     // Đã nhận lịch
-        InProgress = 2,   // Đang thực hiện
-        Completed = 3,    // Đã hoàn thành
-        Canceled = 4      // Đã hủy
+        Pending = 0,
+        Accepted = 1,
+        InProgress = 2,
+        Completed = 3,
+        Canceled = 4
     }
+
     public class Appointment
     {
         public int Id { get; set; }
         public DateTime AppointmentDate { get; set; }
         public string? Notes { get; set; }
 
-        // Quan hệ đến người đặt lịch (customer)
         public int? CustomerId { get; set; }
-        public User Customer { get; set; }
+        [JsonIgnore]
+        public User? Customer { get; set; }
 
-        // Quan hệ đến nhân viên phục vụ (staff)
         public int? StaffId { get; set; }
-        public User Staff { get; set; }
+        [JsonIgnore]
+        public User? Staff { get; set; }
 
-        // Dịch vụ được chọn
         public int? ServiceId { get; set; }
-        public Service Service { get; set; }
+        [JsonIgnore]
+        public Service? Service { get; set; }
 
-        // Ca làm việc (nếu có)
         public int? WorkShiftId { get; set; }
-        public WorkShift WorkShift { get; set; }
+        [JsonIgnore]
+        public WorkShift? WorkShift { get; set; }
 
-        // Trạng thái của lịch hẹn
         public AppointmentStatus Status { get; set; }
     }
+
 }

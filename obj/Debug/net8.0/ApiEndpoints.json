@@ -418,6 +418,22 @@
   },
   {
     "ContainingType": "BookingSalonHair.Controllers.UsersController",
+    "Method": "CreateGuest",
+    "RelativePath": "api/Users/create-guest",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "guestDto",
+        "Type": "BookingSalonHair.DTOs.GuestCustomerDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BookingSalonHair.Controllers.UsersController",
     "Method": "PutUser",
     "RelativePath": "api/Users/PutUser",
     "HttpMethod": "POST",

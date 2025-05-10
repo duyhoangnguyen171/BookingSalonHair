@@ -731,6 +731,37 @@
         }
       }
     },
+    "/api/Users/create-guest": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestCustomerDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestCustomerDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestCustomerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/UserWorkShift/{userId}": {
       "get": {
         "tags": [
@@ -1269,32 +1300,20 @@
             "format": "int32",
             "nullable": true
           },
-          "customer": {
-            "$ref": "#/components/schemas/User"
-          },
           "staffId": {
             "type": "integer",
             "format": "int32",
             "nullable": true
-          },
-          "staff": {
-            "$ref": "#/components/schemas/User"
           },
           "serviceId": {
             "type": "integer",
             "format": "int32",
             "nullable": true
           },
-          "service": {
-            "$ref": "#/components/schemas/Service"
-          },
           "workShiftId": {
             "type": "integer",
             "format": "int32",
             "nullable": true
-          },
-          "workShift": {
-            "$ref": "#/components/schemas/WorkShift"
           },
           "status": {
             "$ref": "#/components/schemas/AppointmentStatus"
@@ -1393,6 +1412,24 @@
         },
         "additionalProperties": false
       },
+      "GuestCustomerDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "LoginDTO": {
         "type": "object",
         "properties": {
@@ -1429,6 +1466,9 @@
           "role": {
             "type": "string",
             "nullable": true
+          },
+          "isGuest": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -1511,6 +1551,9 @@
           "role": {
             "type": "string",
             "nullable": true
+          },
+          "isGuest": {
+            "type": "boolean"
           },
           "userWorkShifts": {
             "type": "array",

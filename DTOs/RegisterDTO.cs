@@ -7,5 +7,6 @@
         public string Password { get; set; }
         public string Phone { get; set; }
         public string Role { get; set; }  // "Admin", "Staff", "Customer"
+        public bool IsGuest { get; set; }
     }
 }

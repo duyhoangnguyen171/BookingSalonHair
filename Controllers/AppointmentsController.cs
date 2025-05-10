@@ -60,26 +60,41 @@ namespace BookingSalonHair.Controllers
 
             return appointment;
         }
-
-        // POST: api/Appointments
+        // tạo lịch%
         [HttpPost]
         [Authorize(Roles = "staff,admin,customer")]
         public async Task<ActionResult<Appointment>> PostAppointment(Appointment appointment)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState); // Kiểm tra tính hợp lệ của dữ liệu
+                return BadRequest(ModelState);
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // Nếu là customer, chỉ cho phép tạo cuộc hẹn cho chính mình
+            // Kiểm tra quyền của khách hàng (customer)
             if (User.IsInRole("customer") && appointment.CustomerId.ToString() != userId)
                 return Forbid();
 
+            // Kiểm tra sự tồn tại của khách hàng vãng lai
+            var customer = await _context.Users.FindAsync(appointment.CustomerId);
+            if (customer == null)
+            {
+                return NotFound("Khách hàng không tồn tại.");
+            }
+
+            // Tạo lịch hẹn cho khách hàng
             _context.Appointments.Add(appointment);
             await _context.SaveChangesAsync();
 
+            // Load các liên kết navigation nếu cần thiết
+            await _context.Entry(appointment).Reference(a => a.Customer).LoadAsync();
+            await _context.Entry(appointment).Reference(a => a.Service).LoadAsync();
+            await _context.Entry(appointment).Reference(a => a.Staff).LoadAsync();
+            await _context.Entry(appointment).Reference(a => a.WorkShift).LoadAsync();
+
             return CreatedAtAction(nameof(GetAppointment), new { id = appointment.Id }, appointment);
         }
+
+
 
         // PUT: api/Appointments/5
         [HttpPut("{id}")]

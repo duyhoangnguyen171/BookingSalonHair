@@ -4,7 +4,19 @@ const API_URL = 'https://localhost:7169/api/Users';
 const token = localStorage.getItem('authToken');
 // Lấy token từ localStorage
 const getToken = () => localStorage.getItem('token');
+const getAuthHeader = () => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    throw new Error("Token không tồn tại. Vui lòng đăng nhập lại.");
+  }
 
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  };
+};
 // Cấu hình header cho request, kèm token Authorization
 const authHeader = () => {
   const token = getToken();
@@ -56,16 +68,46 @@ export const addUser = (data) => {
 };
 export const getStaff = async () => {
   try {
-    const token = localStorage.getItem('authToken'); // Lấy token từ localStorage hoặc bất kỳ nơi nào bạn lưu trữ token
-    const response = await axios.get('https://localhost:7169/api/Users', {
-      headers: {
-        'Authorization': `Bearer ${token}`, // Gửi token trong header
-      },
-    });
-    const staffList = response.data.$values.filter(user => user.role.toLowerCase() === 'staff');
+    const response = await axios.get(
+      'https://localhost:7169/api/Users',
+      getAuthHeader() // dùng hàm để thêm headers
+    );
+
+    const staffList = response.data.$values.filter(
+      (user) => user.role.toLowerCase() === 'staff'
+    );
     return staffList;
   } catch (error) {
     console.error("Lỗi khi lấy danh sách nhân viên:", error);
     throw error;
   }
 };
+//tao khach van lai
+export const createGuest = async (data) => {
+  try {
+    // Nếu không có email, gán giá trị null
+    if (!data.email) {
+      data.email = null;  // Gửi email là null
+    }
+
+    // In ra dữ liệu gửi đi để kiểm tra
+    console.log("Dữ liệu gửi đi khi tạo khách vãng lai:", data);
+
+    const response = await axios.post(
+      'https://localhost:7169/api/Users/create-guest', // Đảm bảo URL đúng
+      data, // Dữ liệu gửi đi
+      {
+        headers: {
+          'Content-Type': 'application/json', // Đảm bảo Content-Type là application/json
+        }
+      }
+    );
+
+    // Trả về dữ liệu khách vãng lai vừa tạo
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi tạo khách vãng lai:", error.response?.data || error.message);
+    throw error; // Ném lỗi ra ngoài để xử lý
+  }
+};
+

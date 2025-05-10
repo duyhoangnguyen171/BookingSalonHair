@@ -29,12 +29,17 @@ namespace BookingSalonHair.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterDTO model)
         {
+            if (string.IsNullOrWhiteSpace(model.Email))
+                return BadRequest("Email không được để trống.");
             // Kiểm tra tồn tại email
             if (await _context.Users.AnyAsync(u => u.Email == model.Email))
             {
                 return BadRequest("Email đã được sử dụng.");
             }
-
+            if (string.IsNullOrWhiteSpace(model.Password))
+            {
+                return BadRequest("Mật khẩu không được để trống.");
+            }
             //  password được lưu dưới dạng hash rất đơn giản (mã hóa Base64) – thay thế bằng giải pháp bảo mật thực tế!
             var user = new User
             {
@@ -42,7 +47,8 @@ namespace BookingSalonHair.Controllers
                 Email = model.Email,
                 PasswordHash = Convert.ToBase64String(Encoding.UTF8.GetBytes(model.Password)),
                 Phone = model.Phone,
-                Role = model.Role   // Giả sử model.Role là "Admin", "Staff", hoặc "Customer"
+                Role = model.Role,
+                IsGuest = model.IsGuest // Giả sử model.Role là "Admin", "Staff", hoặc "Customer"
             };
 
             _context.Users.Add(user);

@@ -24,10 +24,22 @@ const token = getToken();  // Lấy token từ localStorage (hoặc sessionStora
 if (token) {
   setAuthToken(token);  // Nếu có token, thêm vào header
 }
+const getAuthHeader = () => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    throw new Error("Token không tồn tại. Vui lòng đăng nhập lại.");
+  }
 
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  };
+};
 // AppointmentService.js
 const AppointmentService = {
-  getAll: () => api.get("/appointments"),  // Gửi yêu cầu đến /appointments với token trong header
+  getAll: () => api.get("/appointments",getAuthHeader()),  // Gửi yêu cầu đến /appointments với token trong header
   getByUserId: (userId) => api.get(`/appointments/user/${userId}`),
   getById: (id) => api.get(`/appointments/${id}`),
   create: (appointmentData) => api.post("/appointments", appointmentData),

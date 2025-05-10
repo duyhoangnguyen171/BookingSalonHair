@@ -94,5 +94,42 @@ namespace BookingSalonHair.Controllers
 
             return Ok(shifts);
         }
+        // tạo user vãng lai
+        [HttpPost("create-guest")]
+        public async Task<IActionResult> CreateGuest([FromBody] GuestCustomerDto guestDto)
+        {
+            // Kiểm tra số điện thoại không trống
+            if (string.IsNullOrWhiteSpace(guestDto.Phone))
+                return BadRequest("Số điện thoại không được để trống.");
+
+            // Kiểm tra xem số điện thoại đã tồn tại chưa
+            var existingUser = await _context.Users
+                .FirstOrDefaultAsync(u => u.Phone == guestDto.Phone);
+
+            if (existingUser != null)
+            {
+                // Nếu khách vãng lai đã tồn tại, trả về id của khách vãng lai
+                return Ok(new { id = existingUser.Id });
+            }
+
+            // Tạo khách vãng lai
+            var guest = new User
+            {
+                FullName = guestDto.FullName,
+                Phone = guestDto.Phone,
+                Email = null,  // Nếu là khách vãng lai, Email sẽ là null
+                PasswordHash = null,  // Chưa có mật khẩu
+                Role = "Customer",  // Vai trò khách hàng
+                IsGuest = true  // Đánh dấu là khách vãng lai
+            };
+
+            // Thêm khách vào cơ sở dữ liệu
+            _context.Users.Add(guest);
+            await _context.SaveChangesAsync();
+
+            // Trả về id của khách
+            return Ok(new { id = guest.Id });
+        }
+
     }
 }
