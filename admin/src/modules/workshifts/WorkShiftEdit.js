@@ -1,115 +1,132 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import WorkShiftService from "../../services/WorkShiftService";
-
-// Map giá trị loại ca làm
-const shiftTypeOptions = {
-  0: "Ca sáng",
-  1: "Ca chiều",
-  2: "Ca tối",
-};
-
-// Map thứ trong tuần
-const dayOfWeekOptions = {
-  0: "Chủ nhật",
-  1: "Thứ 2",
-  2: "Thứ 3",
-  3: "Thứ 4",
-  4: "Thứ 5",
-  5: "Thứ 6",
-  6: "Thứ 7",
-};
+import "../../asset/styles/workshift/WorkShiftCreate.css";
 
 const WorkShiftEdit = () => {
-  const { id } = useParams();
   const navigate = useNavigate();
+  const { id } = useParams(); // Get the work shift ID from URL parameters
 
   const [formData, setFormData] = useState({
-    id: 0,
     name: "",
-    shiftType: 0,
-    dayOfWeek: 0,
+    shiftType: 0, // 0 - sáng, 1 - chiều, 2 - tối
+    date: "", // ngày được chọn (để tính dayOfWeek)
+    dayOfWeek: 0, // được tính tự động từ date
     maxUsers: 1,
-    startTime: "",
-    endTime: "",
   });
+
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  // Fetch work shift data when component mounts
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchWorkShift = async () => {
       try {
-        const data = await WorkShiftService.getById(id);
+        const response = await WorkShiftService.getById(id);
+        const shift = response; // Assuming response is the work shift object
+
+        // Calculate a date based on dayOfWeek
+        const today = new Date();
+        const currentDay = today.getDay();
+        const diff = shift.dayOfWeek - currentDay;
+        const targetDate = new Date(today);
+        targetDate.setDate(today.getDate() + diff);
+
+        // Format date for input (YYYY-MM-DD)
+        const formattedDate = targetDate.toISOString().split("T")[0];
 
         setFormData({
-          id: data.id,
-          name: data.name || "",
-          shiftType: data.shiftType ?? 0,
-          dayOfWeek: data.dayOfWeek ?? 0,
-          maxUsers: data.maxUsers ?? 1,
-          startTime: data.startTime || "",
-          endTime: data.endTime || "",
+          name: shift.name || "",
+          shiftType: shift.shiftType || 0,
+          date: formattedDate,
+          dayOfWeek: shift.dayOfWeek || 0,
+          maxUsers: shift.maxUsers || 1,
         });
+        setLoading(false);
       } catch (err) {
-        console.error("Lỗi khi lấy dữ liệu ca làm:", err);
-        alert("Không thể lấy dữ liệu ca làm.");
+        setError("Không thể tải thông tin ca làm.");
+        setLoading(false);
+        console.error(err);
       }
     };
-    fetchData();
+
+    fetchWorkShift();
   }, [id]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "maxUsers" ? parseInt(value, 10) : value,
+      [name]: name === "maxUsers" ? parseInt(value) : value,
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleDateChange = (e) => {
+    const selectedDate = new Date(e.target.value);
+    const weekday = selectedDate.getDay(); // 0 = CN, ..., 6 = Thứ 7
 
-    // Prepare the data in the required format
-    const dataToSend = {
-      id: formData.id,
-      shiftType: Number(formData.shiftType), // Ensure shiftType is a number
+    setFormData((prev) => ({
+      ...prev,
+      date: e.target.value,
+      dayOfWeek: weekday,
+    }));
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!formData.name || formData.name.trim() === "") {
+      setError("Tên ca làm không được để trống.");
+      return;
+    }
+
+    if (formData.maxUsers <= 0) {
+      setError("Số lượng người tối đa phải lớn hơn 0.");
+      return;
+    }
+
+    if (!formData.date) {
+      setError("Vui lòng chọn ngày làm việc.");
+      return;
+    }
+
+    const payload = {
+      id: parseInt(id),
       name: formData.name,
-      startTime: formData.startTime,
-      endTime: formData.endTime,
-      dayOfWeek: formData.dayOfWeek,
+      shiftType: parseInt(formData.shiftType, 10),
+      dayOfWeek: parseInt(formData.dayOfWeek, 10),
       maxUsers: formData.maxUsers,
-      appointments: [], // Assuming no appointments are modified in this update
-      userWorkShifts: [], // Assuming no userWorkShifts are modified in this update
     };
 
-    console.log("Sending updated data:", dataToSend);
-
     try {
-      // Send the structured data to the API
-      const response = await WorkShiftService.update(id, dataToSend);
-
-      // Log the response for debugging
-      console.log("Response from API:", response);
-
-      // On success, alert and navigate
+      await WorkShiftService.update(payload);
       alert("Cập nhật ca làm thành công!");
       navigate("/admin/workshifts");
     } catch (err) {
-      // Handle error and log the details
-      console.error("Error during update:", err);
-      if (err.response) {
-        console.error("Error response from server:", err.response.data);
-        alert(
-          `Không thể cập nhật ca làm: ${
-            err.response.data.message || err.response.statusText
-          }`
-        );
+      if (err.response?.status === 401) {
+        setError("Bạn không có quyền thực hiện hành động này.");
+      } else if (err.response?.status === 404) {
+        setError("Ca làm không tồn tại.");
       } else {
-        alert("Lỗi kết nối hoặc vấn đề khác khi cập nhật ca làm.");
+        setError("Đã xảy ra lỗi khi cập nhật ca làm.");
+        console.error(err);
       }
     }
   };
 
+  if (loading) {
+    return <div>Đang tải thông tin ca làm...</div>;
+  }
+
+  if (error && !formData.name) {
+    return <div style={{ color: "red" }}>{error}</div>;
+  }
+
   return (
-    <div style={{ maxWidth: "600px", margin: "auto" }}>
-      <h2>Chỉnh sửa ca làm</h2>
-      <form onSubmit={handleSubmit}>
+    <div style={{ padding: "1rem" }}>
+      <h2>Chỉnh Sửa Ca Làm</h2>
+      <form onSubmit={handleSave}>
         <div>
           <label>Tên ca làm:</label>
           <input
@@ -122,78 +139,39 @@ const WorkShiftEdit = () => {
         </div>
 
         <div>
-          <label>Loại ca làm:</label>
-          <select
-            name="shiftType"
-            value={formData.shiftType}
-            onChange={handleChange}
-            required
-          >
-            {Object.entries(shiftTypeOptions).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
+          <label>Loại ca:</label>
+          <select name="shiftType" value={formData.shiftType} onChange={handleChange}>
+            <option value={0}>Ca sáng</option>
+            <option value={1}>Ca chiều</option>
+            <option value={2}>Ca tối</option>
           </select>
         </div>
 
         <div>
-          <label>Thứ:</label>
-          <select
-            name="dayOfWeek"
-            value={formData.dayOfWeek}
-            onChange={handleChange}
+          <label>Chọn ngày:</label>
+          <input
+            type="date"
+            name="date"
+            value={formData.date}
+            onChange={handleDateChange}
             required
-          >
-            {Object.entries(dayOfWeekOptions).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </select>
+          />
         </div>
 
         <div>
-          <label>Số người tối đa:</label>
+          <label>Số lượng người tối đa:</label>
           <input
             type="number"
             name="maxUsers"
             value={formData.maxUsers}
             onChange={handleChange}
-            required
             min={1}
           />
         </div>
 
-        <div>
-          <label>Giờ bắt đầu:</label>
-          <input
-            type="time"
-            name="startTime"
-            value={formData.startTime}
-            onChange={handleChange}
-            required
-            min="00:00"
-            max="23:59"
-            step="3600" // chọn theo giờ, hoặc dùng "60" nếu muốn chọn từng phút
-          />
-        </div>
+        {error && <p style={{ color: "red" }}>{error}</p>}
 
-        <div>
-          <label>Giờ kết thúc:</label>
-          <input
-            type="time"
-            name="endTime"
-            value={formData.endTime}
-            onChange={handleChange}
-            required
-            min="00:00"
-            max="23:59"
-            step="3600"
-          />
-        </div>
-
-        <button type="submit">Cập nhật</button>
+        <button type="submit">Lưu</button>
       </form>
     </div>
   );

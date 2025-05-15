@@ -3,49 +3,73 @@ import { useParams } from "react-router-dom";
 import WorkShiftService from "../../services/WorkShiftService";
 
 const WorkShiftDetail = () => {
-    const { shiftId } = useParams();
-    const [data, setData] = useState(null);
-    const [assigning, setAssigning] = useState(false);
-    const [error, setError] = useState(null);
-  
-    useEffect(() => {
-      const fetchData = async () => {
-        try {
-          const result = await WorkShiftService.getById(shiftId);
-          console.log('API trả về:', result);
-          setData(result);
-          setError(null);
-        } catch (error) {
-          console.error("Không thể tải dữ liệu ca làm:", error);
-          setError("Không thể tải dữ liệu ca làm.");
-        }
-      };
-  
-      if (shiftId) {
-        fetchData();
-      }
-    }, [shiftId]);
-  
-    const assignStaff = async (appointmentId, staffId) => {
-      if (!staffId) return;
-      setAssigning(true);
+  const { shiftId } = useParams();
+  const [data, setData] = useState(null);
+  const [assigning, setAssigning] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        await WorkShiftService.assignStaff(shiftId, appointmentId, staffId);
+        const result = await WorkShiftService.getById(shiftId);
+        console.log("API trả về:", result);
+        setData(result);
         setError(null);
-        alert("Gán thành công");
-        const updated = await WorkShiftService.getById(shiftId);
-        setData(updated);
-      } catch (err) {
-        setError("Lỗi khi gán nhân viên.");
-      } finally {
-        setAssigning(false);
+      } catch (error) {
+        console.error("Không thể tải dữ liệu ca làm:", error);
+        setError("Không thể tải dữ liệu ca làm.");
       }
     };
-  
-    if (!data) return <div>Đang tải dữ liệu...</div>;
-  
-    const appointments = data.appointments?.$values ?? [];
-    const registeredStaffs = data.registeredStaffs?.$values ?? [];
+
+    if (shiftId) {
+      fetchData();
+    }
+  }, [shiftId]);
+
+  const assignStaff = async (appointmentId, staffId) => {
+    if (!staffId) return;
+    setAssigning(true);
+    try {
+      await WorkShiftService.assignStaff(shiftId, appointmentId, staffId);
+      setError(null);
+      alert("Gán thành công");
+      const updated = await WorkShiftService.getById(shiftId);
+      setData(updated);
+    } catch (err) {
+      setError("Lỗi khi gán nhân viên.");
+    } finally {
+      setAssigning(false);
+    }
+  };
+  const approveStaff = async (userId) => {
+  try {
+    // Ép kiểu chuyển shiftId và userId thành số
+    const workshiftId = parseInt(shiftId, 10); // shiftId là biến có sẵn trong scope
+    const userIdNumber = parseInt(userId, 10);
+
+    console.log("Gửi yêu cầu duyệt nhân viên với dữ liệu:", {
+      workshiftId,
+      userId: userIdNumber,
+    });
+
+    // Gửi yêu cầu API
+    await WorkShiftService.approveStaff(workshiftId, userIdNumber);
+
+    const updated = await WorkShiftService.getById(workshiftId);
+    setData(updated);
+    setError(null);
+    alert("Nhân viên đã được duyệt.");
+  } catch (err) {
+    console.error("Lỗi khi duyệt nhân viên:", err);
+    setError("Lỗi khi duyệt nhân viên.");
+  }
+};
+
+  if (!data) return <div>Đang tải dữ liệu...</div>;
+
+  const appointments = data.appointments?.$values ?? [];
+  const registeredStaffs = data.registeredStaffs?.$values ?? [];
+
   return (
     <div style={{ display: "flex", gap: "40px" }}>
       {/* Danh sách lịch hẹn */}
@@ -63,15 +87,21 @@ const WorkShiftDetail = () => {
                 marginBottom: 10,
               }}
             >
-              <p><strong>Khách:</strong> {appt.customerName || "Chưa có"}</p>
-              <p><strong>Nhân viên:</strong> {appt.staffName || "Chưa gán"}</p>
+              <p>
+                <strong>Khách:</strong> {appt.customerName || "Chưa có"}
+              </p>
+              <p>
+                <strong>Nhân viên:</strong> {appt.staffName || "Chưa gán"}
+              </p>
               <label>Chọn nhân viên khác:</label>
               <select
                 onChange={(e) => assignStaff(appt.id, parseInt(e.target.value))}
                 disabled={assigning}
                 defaultValue=""
               >
-                <option value="" disabled>-- Chọn nhân viên --</option>
+                <option value="" disabled>
+                  -- Chọn nhân viên --
+                </option>
                 {registeredStaffs.map((staff) => (
                   <option key={staff.id} value={staff.id}>
                     {staff.fullName}
@@ -82,7 +112,7 @@ const WorkShiftDetail = () => {
           ))
         )}
       </div>
-  
+
       {/* Nhân viên đã đăng ký */}
       <div style={{ flex: 1 }}>
         <h3>Nhân viên đã đăng ký</h3>
@@ -91,17 +121,26 @@ const WorkShiftDetail = () => {
         ) : (
           <ul>
             {registeredStaffs.map((s) => (
-              <li key={s.id}>{s.fullName}</li>
+              <li key={s.id}>
+                {s.fullName}
+                {!s.isApproved && (
+                  <button
+                    onClick={() => approveStaff(s.id)}
+                    style={{ marginLeft: "10px" }}
+                  >
+                    Duyệt
+                  </button>
+                )}
+              </li>
             ))}
           </ul>
         )}
       </div>
-  
+
       {/* Hiển thị thông báo lỗi nếu có */}
       {error && <div className="error">{error}</div>}
     </div>
   );
-  
 };
 
 export default WorkShiftDetail;

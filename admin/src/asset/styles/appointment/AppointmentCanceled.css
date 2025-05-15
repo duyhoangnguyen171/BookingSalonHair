@@ -1,0 +1,47 @@
+/* AppointmentCanceled.css */
+.appointment-canceled {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  margin: 0 auto;
+  font-family: 'Arial', sans-serif;
+}
+
+.appointment-canceled h1 {
+  text-align: center;
+  color: #333;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.appointment-item {
+  background-color: white;
+  margin: 10px 0;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.appointment-item p {
+  margin: 5px 0;
+  font-size: 16px;
+}
+
+.appointment-item p.notes {
+  font-style: italic;
+  color: #777;
+}
+
+.appointment-item p.appointmentDate {
+  font-weight: bold;
+  color: #555;
+}
+
+.no-appointments {
+  text-align: center;
+  font-size: 18px;
+  color: #888;
+  margin-top: 50px;
+}

@@ -4,7 +4,7 @@ import axios from 'axios';
 const api = axios.create({
   baseURL: 'https://localhost:7169/api',  // URL của API
 });
-
+const API_URL = 'https://localhost:7169/api/appointments';
 // Hàm này sẽ thiết lập token vào header Authorization
 export const setAuthToken = (token) => {
   if (token) {
@@ -24,6 +24,7 @@ const token = getToken();  // Lấy token từ localStorage (hoặc sessionStora
 if (token) {
   setAuthToken(token);  // Nếu có token, thêm vào header
 }
+
 const getAuthHeader = () => {
   const token = localStorage.getItem("token");
   if (!token) {
@@ -37,14 +38,23 @@ const getAuthHeader = () => {
     },
   };
 };
+
 // AppointmentService.js
 const AppointmentService = {
-  getAll: () => api.get("/appointments",getAuthHeader()),  // Gửi yêu cầu đến /appointments với token trong header
+  getAll: () => api.get("/appointments", getAuthHeader()),
   getByUserId: (userId) => api.get(`/appointments/user/${userId}`),
   getById: (id) => api.get(`/appointments/${id}`),
-  create: (appointmentData) => api.post("/appointments", appointmentData),
-  update: (id, appointmentData) => api.put(`/appointments/${id}`, appointmentData),
-  delete: (id) => api.delete(`/appointments/${id}`),
+  create: (appointmentData) => api.post("/appointments", appointmentData, getAuthHeader()),
+  update: (id, appointmentData) => api.put(`/appointments/${id}`, appointmentData, getAuthHeader())
+    .catch(err => {
+      console.error("Update request failed:", err.response || err);
+      throw err;
+    }),
+  cancelAppointment(appointmentId) {
+    return axios.put(`${API_URL}/${appointmentId}/cancel`, { status: 4 },getAuthHeader());
+  },
+  getCanceled: () => api.get("/appointments?status=4", getAuthHeader()),
+  delete: (id) => api.delete(`/appointments/${id}`, getAuthHeader()),
 };
 
 export default AppointmentService;

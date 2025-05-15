@@ -117,16 +117,38 @@ public class UserWorkShiftController : ControllerBase
     [Authorize(Roles = "staff,admin")]
     public async Task<IActionResult> RegisterSelfToWorkShift([FromBody] RegisterWorkShiftDTO registerWorkShiftDTO)
     {
-        var userId = registerWorkShiftDTO.UserId;
-        var workShiftId = registerWorkShiftDTO.WorkShiftId;
-        var workShift = await _context.WorkShifts.FindAsync(workShiftId);
+        // Lấy ID người dùng đã đăng nhập từ claim (thường là string)
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+        // Chuyển đổi userId từ string sang int (nếu cần)
+        if (!int.TryParse(userIdClaim, out int userId))
+        {
+            return BadRequest(new { message = "ID người dùng không hợp lệ." });
+        }
+
+        var workShiftId = registerWorkShiftDTO.WorkShiftId;
+        var staffId = registerWorkShiftDTO.UserId; // Với admin, lấy UserId từ request (staffId)
+
+        // Đối với admin, kiểm tra xem staffId có được cung cấp hay không
+        if (User.IsInRole("admin") && staffId == 0)
+        {
+            return BadRequest(new { message = "Cần phải cung cấp Staff ID cho admin." });
+        }
+
+        // Nếu là admin và staffId hợp lệ, gán userId bằng staffId
+        if (User.IsInRole("admin") && staffId != 0)
+        {
+            userId = staffId; // Cập nhật userId thành staffId từ request
+        }
+
+        // Kiểm tra xem ca làm có tồn tại không
+        var workShift = await _context.WorkShifts.FindAsync(workShiftId);
         if (workShift == null)
         {
             return NotFound(new { message = "Ca làm không tồn tại." });
         }
 
-        // Kiểm tra xem nhân viên đã đăng ký ca làm này chưa
+        // Kiểm tra xem người dùng (staff hoặc admin) đã đăng ký ca làm này chưa
         bool alreadyRegistered = await _context.UserWorkShifts
             .AnyAsync(x => x.UserId == userId && x.WorkShiftId == workShiftId);
 
@@ -144,18 +166,24 @@ public class UserWorkShiftController : ControllerBase
             UserId = userId,
             WorkShiftId = workShiftId,
             RegisteredAt = DateTime.Now,
-            // Nếu là admin, gán luôn là duyệt (IsApproved = true), nếu là staff thì là chờ duyệt (IsApproved = false)
-            IsApproved = isAdmin ? true : false
+            // Nếu là admin, tự động duyệt; nếu là staff thì chờ duyệt
+            IsApproved = isAdmin
         };
 
+        // Thêm bản ghi đăng ký ca làm vào cơ sở dữ liệu
         _context.UserWorkShifts.Add(userWorkShift);
         await _context.SaveChangesAsync();
 
+        // Trả về thông báo thích hợp
         return Ok(new
         {
             message = isAdmin ? "Đã gán nhân viên vào ca làm thành công." : "Đăng ký ca làm thành công. Vui lòng chờ admin duyệt."
         });
     }
+
+
+
+
     //Lấy danh sach nhân viên chưa đăng ký ca làm đó
     // GET: api/UserWorkShift/staff-not-registered
     [HttpGet("staff-not-registered/{workShiftId}")]

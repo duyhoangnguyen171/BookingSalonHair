@@ -125,7 +125,7 @@ namespace BookingSalonHair.Controllers
 
         // POST: api/WorkShifts/by-type?type=morning
         [HttpPost("by-type")]
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "admin,staff")]
         public async Task<IActionResult> CreateWorkShiftByType([FromBody] CreateWorkShiftDto dto)
         {
             // Lấy thời gian ca làm dựa vào ShiftType (sử dụng enum)
@@ -168,8 +168,8 @@ namespace BookingSalonHair.Controllers
 
         // POST: api/WorkShifts/Register?shiftId=1&staffId=123
         [HttpPost("Register")]
-        [Authorize(Roles = "staff, admin")]  // Cả staff và admin đều có quyền gọi API này
-        public async Task<IActionResult> RegisterWorkShift([FromQuery] int shiftId, [FromQuery] int staffId, [FromQuery] int? customerId = null)
+        [Authorize(Roles = "staff, admin")]
+        public async Task<IActionResult> RegisterWorkShift([FromQuery] int shiftId, [FromQuery] int? staffId = null, [FromQuery] int? customerId = null)
         {
             var workShift = await _context.WorkShifts
                 .Include(w => w.Appointments)
@@ -178,46 +178,42 @@ namespace BookingSalonHair.Controllers
             if (workShift == null)
                 return NotFound("Ca làm không tồn tại.");
 
-            // Kiểm tra quyền của người gọi API (staff hoặc admin)
             var isAdmin = User.IsInRole("admin");
 
-            // Kiểm tra nếu người gọi là staff, thì phải có chỗ trống
-            if (!isAdmin && workShift.Appointments.Count >= workShift.MaxUsers)
+            // Nếu là staff thì lấy staffId từ Claims
+            if (!isAdmin)
             {
-                return BadRequest("Số lượng người đăng ký cho ca làm này đã đầy.");
-            }
+                var staffIdClaim = User.Claims.FirstOrDefault(c => c.Type == "StaffId");
+                if (staffIdClaim == null)
+                    return Unauthorized("Không tìm thấy thông tin nhân viên từ token.");
 
-            // Nếu chỉ đăng ký ca làm cho nhân viên (không có khách hàng), thì không cần customerId
-            if (customerId == null)
-            {
-                var appointment = new Appointment
+                staffId = int.Parse(staffIdClaim.Value);
+
+                // Kiểm tra số lượng đăng ký
+                if (workShift.Appointments.Count >= workShift.MaxUsers)
                 {
-                    WorkShiftId = workShift.Id,
-                    StaffId = staffId
-                };
-
-                _context.Appointments.Add(appointment);
-                await _context.SaveChangesAsync();
-
-                return Ok("Đăng ký ca làm thành công.");
+                    return BadRequest("Số lượng người đăng ký cho ca làm này đã đầy.");
+                }
             }
             else
             {
-                // Nếu đăng ký làm tóc, cần có cả StaffId và CustomerId
-                var appointment = new Appointment
-                {
-                    WorkShiftId = workShift.Id,
-                    StaffId = staffId,
-                    CustomerId = customerId.Value // customerId phải có giá trị hợp lệ
-                };
-
-                _context.Appointments.Add(appointment);
-                await _context.SaveChangesAsync();
-
-                return Ok("Đăng ký lịch làm tóc thành công.");
+                // Admin phải truyền staffId
+                if (staffId == null)
+                    return BadRequest("Vui lòng chọn nhân viên để đăng ký ca làm.");
             }
+
+            // Tạo Appointment
+            var appointment = new Appointment
+            {
+                WorkShiftId = workShift.Id,
+                StaffId = staffId.Value,
+                CustomerId = customerId // null nếu không đăng ký khách
+            };
+
+            _context.Appointments.Add(appointment);
+            await _context.SaveChangesAsync();
+
+            return Ok("Đăng ký ca làm thành công.");
         }
-
-
     }
 }

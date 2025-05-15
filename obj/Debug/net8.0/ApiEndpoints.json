@@ -110,6 +110,22 @@
   },
   {
     "ContainingType": "BookingSalonHair.Controllers.AppointmentsController",
+    "Method": "CancelAppointment",
+    "RelativePath": "api/Appointments/{id}/cancel",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BookingSalonHair.Controllers.AppointmentsController",
     "Method": "UpdateAppointmentStatus",
     "RelativePath": "api/Appointments/{id}/status",
     "HttpMethod": "PUT",
@@ -714,7 +730,7 @@
       },
       {
         "Name": "staffId",
-        "Type": "System.Int32",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
         "IsRequired": false
       },
       {

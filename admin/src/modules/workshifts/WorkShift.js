@@ -9,6 +9,12 @@ import {
   Paper,
   Box,
   Divider,
+  TextField,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+  Pagination,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import WorkShiftService from "../../services/WorkShiftService";
@@ -16,9 +22,14 @@ import WorkShiftService from "../../services/WorkShiftService";
 const Workshift = () => {
   const navigate = useNavigate();
   const [shifts, setShifts] = useState([]);
+  const [filteredShifts, setFilteredShifts] = useState([]);
   const [role, setRole] = useState("");
   const [userId, setUserId] = useState("");
-  const [selectedDay, setSelectedDay] = useState(""); // Thêm để lọc theo thứ
+  const [selectedDay, setSelectedDay] = useState("");
+  const [bookedFilter, setBookedFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 5; // Maximum 10 shifts per page
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -56,23 +67,46 @@ const Workshift = () => {
     try {
       const response = await WorkShiftService.getAll();
       const data = response?.$values ?? response;
-      setShifts(Array.isArray(data) ? data : []);
+      console.log("data:", data);
+
+      const shiftData = Array.isArray(data) ? data : [];
+      setShifts(shiftData);
+      setFilteredShifts(shiftData);
     } catch (err) {
       console.error("Error loading shifts:", err);
       setShifts([]);
+      setFilteredShifts([]);
     }
   };
 
-  const loadBookedShifts = async (staffId) => {
-    try {
-      const response = await WorkShiftService.getBookedByStaffId(staffId);
-      const data = response?.$values ?? response;
-      setShifts(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Error loading booked shifts:", err);
-      setShifts([]);
+  // Filter and search effect
+  useEffect(() => {
+    let filtered = [...shifts];
+
+    // Filter by day of week
+    if (selectedDay !== "") {
+      filtered = filtered.filter(
+        (shift) => shift.dayOfWeek === parseInt(selectedDay)
+      );
     }
-  };
+
+    // Filter by booked status
+    if (bookedFilter !== "all") {
+      filtered = filtered.filter(
+        (shift) => shift.booked === (bookedFilter === "booked")
+      );
+    }
+
+    // Search by shift name
+    if (searchTerm) {
+      filtered = filtered.filter((shift) =>
+        shift.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    setFilteredShifts(filtered);
+    setPage(1); // Reset to page 1 when filters or search changes
+  }, [selectedDay, bookedFilter, searchTerm, shifts]);
 
   const handleDeleteShift = async (id) => {
     if (window.confirm("Bạn có chắc muốn xóa ca làm này?")) {
@@ -85,27 +119,36 @@ const Workshift = () => {
     }
   };
 
-  const handleRegisterShift = (shift) => {
-    navigate(`/admin/workshifts/register?shiftId=${shift.id}`);
+   const handleRegisterShift = (shift) => {
+    const path = role === "admin" 
+      ? `/admin/workshifts/register?shiftId=${shift.id}`
+      : `/staff/workshifts/register?shiftId=${shift.id}`;
+    navigate(path);
   };
+
   const handleEditShift = (shift) => {
     window.location.href = `http://localhost:3001/admin/workshifts/edit/${shift.id}`;
   };
+
   const handleViewDetails = (shiftId) => {
-    console.log("Shift ID:", shiftId); // Kiểm tra xem shift.id có giá trị hợp lệ không
+    console.log("Shift ID:", shiftId);
     window.location.href = `http://localhost:3001/admin/workshifts/details/view/${shiftId}`;
   };
 
-  // const handleRegisterShift = async (shiftId) => {
-  //   if (!userId) return;
-  //   try {
-  //     await WorkShiftService.registerShift(userId, shiftId);
-  //     loadBookedShifts(userId);
-  //   } catch (err) {
-  //     console.error("Lỗi khi đăng ký ca làm:", err);
-  //     alert("Không thể đăng ký ca làm.");
-  //   }
-  // };
+  // Hàm tính ngày cụ thể dựa trên dayOfWeek
+  const getSpecificDate = (dayOfWeek) => {
+    const today = new Date();
+    const currentDay = today.getDay(); // 0 (Chủ Nhật) đến 6 (Thứ Bảy)
+    const diff = dayOfWeek - currentDay; // Tính khoảng cách đến ngày cần tìm
+    const targetDate = new Date(today);
+    targetDate.setDate(today.getDate() + diff); // Cộng/trừ số ngày để đến đúng thứ
+
+    // Định dạng ngày theo dạng DD/MM/YYYY
+    const day = String(targetDate.getDate()).padStart(2, "0");
+    const month = String(targetDate.getMonth() + 1).padStart(2, "0");
+    const year = targetDate.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
 
   const getDayName = (dayNumber) => {
     const days = [
@@ -120,6 +163,17 @@ const Workshift = () => {
     return days[dayNumber] || `Thứ ${dayNumber}`;
   };
 
+  const handlePageChange = (event, value) => {
+    setPage(value);
+  };
+
+  // Calculate pagination
+  const paginatedShifts = filteredShifts.slice(
+    (page - 1) * rowsPerPage,
+    page * rowsPerPage
+  );
+  const totalPages = Math.ceil(filteredShifts.length / rowsPerPage);
+
   return (
     <Box sx={{ maxWidth: "auto", mx: "auto", mt: 4, px: 2 }}>
       <Paper elevation={3} sx={{ p: 3 }}>
@@ -127,29 +181,47 @@ const Workshift = () => {
           Danh sách ca làm
         </Typography>
 
-        {/* Dropdown lọc theo thứ */}
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle1">Lọc theo thứ:</Typography>
-          <select
-            value={selectedDay}
-            onChange={(e) => setSelectedDay(e.target.value)}
-            style={{
-              padding: "8px",
-              borderRadius: "4px",
-              border: "1px solid #ccc",
-              marginTop: "4px",
-            }}
-          >
-            <option value="">Tất cả</option>
-            <option value="1">Thứ Hai</option>
-            <option value="2">Thứ Ba</option>
-            <option value="3">Thứ Tư</option>
-            <option value="4">Thứ Năm</option>
-            <option value="5">Thứ Sáu</option>
-            <option value="6">Thứ Bảy</option>
-            <option value="0">Chủ Nhật</option>
-          </select>
-        </Box>
+        <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+          <FormControl sx={{ minWidth: 150 }}>
+            <InputLabel>Lọc theo thứ</InputLabel>
+            <Select
+              value={selectedDay}
+              onChange={(e) => setSelectedDay(e.target.value)}
+              label="Lọc theo thứ"
+            >
+              <MenuItem value="">Tất cả</MenuItem>
+              <MenuItem value="1">Thứ Hai</MenuItem>
+              <MenuItem value="2">Thứ Ba</MenuItem>
+              <MenuItem value="3">Thứ Tư</MenuItem>
+              <MenuItem value="4">Thứ Năm</MenuItem>
+              <MenuItem value="5">Thứ Sáu</MenuItem>
+              <MenuItem value="6">Thứ Bảy</MenuItem>
+              <MenuItem value="0">Chủ Nhật</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl sx={{ minWidth: 150 }}>
+            <InputLabel>Trạng thái</InputLabel>
+            <Select
+              value={bookedFilter}
+              onChange={(e) => setBookedFilter(e.target.value)}
+              label="Trạng thái"
+            >
+              <MenuItem value="all">Tất cả</MenuItem>
+              <MenuItem value="booked">Đã đăng ký</MenuItem>
+              <MenuItem value="unbooked">Chưa đăng ký</MenuItem>
+            </Select>
+          </FormControl>
+
+          <TextField
+            label="Tìm kiếm theo tên ca"
+            variant="outlined"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            size="small"
+            sx={{ minWidth: 250 }}
+          />
+        </Stack>
 
         {role === "admin" && (
           <Button
@@ -166,17 +238,12 @@ const Workshift = () => {
 
         <Divider sx={{ mb: 2 }} />
 
-        {shifts.length === 0 ? (
+        {filteredShifts.length === 0 ? (
           <Typography color="text.secondary">Không có ca làm nào.</Typography>
         ) : (
-          <List>
-            {shifts
-              .filter((shift) =>
-                selectedDay === ""
-                  ? true
-                  : shift.dayOfWeek === parseInt(selectedDay)
-              )
-              .map((shift) => (
+          <>
+            <List>
+              {paginatedShifts.map((shift) => (
                 <ListItem
                   key={shift.id}
                   sx={{
@@ -190,19 +257,16 @@ const Workshift = () => {
                     primary={<strong>{shift.name}</strong>}
                     secondary={`Thời gian: ${shift.startTime} - ${
                       shift.endTime
-                    }, Thứ: ${getDayName(shift.dayOfWeek)}, Số người tối đa: ${
-                      shift.maxUsers
-                    }`}
+                    }, Ngày: ${getSpecificDate(shift.dayOfWeek)} (${
+                      getDayName(shift.dayOfWeek)
+                    }), Số người tối đa: ${shift.maxUsers}`}
                   />
                   <Stack direction="row" spacing={1}>
                     <Button
                       variant="outlined"
                       size="small"
                       color="info"
-                      onClick={() => {
-                        console.log("Button clicked");
-                        handleViewDetails(shift.id);
-                      }}
+                      onClick={() => handleViewDetails(shift.id)}
                     >
                       Xem
                     </Button>
@@ -233,7 +297,7 @@ const Workshift = () => {
                         <Button
                           variant="outlined"
                           size="small"
-                          onClick={() =>  handleRegisterShift(shift)}
+                          onClick={() => handleRegisterShift(shift)}
                         >
                           Đăng ký
                         </Button>
@@ -241,7 +305,20 @@ const Workshift = () => {
                   </Stack>
                 </ListItem>
               ))}
-          </List>
+            </List>
+
+            {filteredShifts.length > 0 && (
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                sx={{ mt: 2 }}
+                siblingCount={1}
+                boundaryCount={1}
+              />
+            )}
+          </>
         )}
       </Paper>
     </Box>

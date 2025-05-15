@@ -15,8 +15,13 @@ namespace BookingSalonHair.Models
 
     public class Appointment
     {
+        private DateTime _appointmentDate;
         public int Id { get; set; }
-        public DateTime AppointmentDate { get; set; }
+        public DateTime AppointmentDate
+        {
+            get => _appointmentDate;
+            set => _appointmentDate = DateTime.SpecifyKind(value.ToUniversalTime(), DateTimeKind.Utc);
+        }
         public string? Notes { get; set; }
 
         public int? CustomerId { get; set; }
@@ -36,6 +41,8 @@ namespace BookingSalonHair.Models
         public WorkShift? WorkShift { get; set; }
 
         public AppointmentStatus Status { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; 
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 
 }

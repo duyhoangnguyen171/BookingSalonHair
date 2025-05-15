@@ -46,6 +46,12 @@ namespace SalonBooking.API.Data
                 .HasForeignKey(a => a.ServiceId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Appointment>()
+            .Property(a => a.AppointmentDate)
+            .HasColumnType("datetime2")
+            .HasConversion(
+            v => v.ToUniversalTime(),
+            v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
             // WorkShift - Appointment (1 - nhiều)
             modelBuilder.Entity<Appointment>()
                 .HasOne(a => a.WorkShift)

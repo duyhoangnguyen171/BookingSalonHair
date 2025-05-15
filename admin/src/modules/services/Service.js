@@ -10,6 +10,8 @@ import {
   Paper,
   Stack,
   Modal,
+  TextField,
+  Pagination,
 } from "@mui/material";
 import ServiceService from "../../services/Serviceservice";
 import ServiceAdd from "./ServiceAdd";
@@ -17,11 +19,15 @@ import ServiceEdit from "./ServiceEdit";
 
 const Services = () => {
   const [services, setServices] = useState([]);
+  const [filteredServices, setFilteredServices] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [openAdd, setOpenAdd] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openView, setOpenView] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [selectedServiceId, setSelectedServiceId] = useState(null);
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 8; // Maximum 10 services per page
 
   const loadServices = async () => {
     try {
@@ -29,18 +35,36 @@ const Services = () => {
       const data = response.data;
       if (data && Array.isArray(data.$values)) {
         setServices(data.$values);
+        setFilteredServices(data.$values);
       } else {
         setServices([]);
+        setFilteredServices([]);
       }
     } catch (error) {
       console.error("Lỗi khi tải dịch vụ:", error);
       setServices([]);
+      setFilteredServices([]);
     }
   };
 
   useEffect(() => {
     loadServices();
   }, []);
+
+  // Search effect
+  useEffect(() => {
+    let filtered = [...services];
+
+    // Filter by service name
+    if (searchTerm) {
+      filtered = filtered.filter((service) =>
+        service.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    setFilteredServices(filtered);
+    setPage(1); // Reset to page 1 when search changes
+  }, [searchTerm, services]);
 
   const handleAdd = () => setOpenAdd(true);
   const handleCloseAdd = () => setOpenAdd(false);
@@ -70,24 +94,46 @@ const Services = () => {
 
   const handleCloseView = () => setOpenView(false);
 
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+  };
+
+  // Calculate pagination
+  const paginatedServices = filteredServices.slice(
+    (page - 1) * rowsPerPage,
+    page * rowsPerPage
+  );
+  const totalPages = Math.ceil(filteredServices.length / rowsPerPage);
+
   return (
     <div>
       <h1>Dịch vụ</h1>
-      <div className="button-container">
+      <Stack direction="row" spacing={2} style={{ marginBottom: "20px" }}>
         <Button
-          className="add-button"
           variant="contained"
           color="primary"
           onClick={handleAdd}
         >
           Thêm dịch vụ
         </Button>
-      </div>
+        <TextField
+          label="Tìm kiếm theo tên dịch vụ"
+          variant="outlined"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          style={{ minWidth: 250 }}
+          size="small"
+        />
+      </Stack>
       <ServiceAdd
         open={openAdd}
         onClose={handleCloseAdd}
         onSuccess={() => {
-          loadServices(); // Cập nhật danh sách dịch vụ sau khi thêm mới
+          loadServices();
           handleCloseAdd();
         }}
       />
@@ -104,8 +150,8 @@ const Services = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {services.length > 0 ? (
-              services.map((service) => (
+            {paginatedServices.length > 0 ? (
+              paginatedServices.map((service) => (
                 <TableRow key={service.id}>
                   <TableCell>{service.id}</TableCell>
                   <TableCell>{service.name}</TableCell>
@@ -152,7 +198,18 @@ const Services = () => {
         </Table>
       </TableContainer>
 
-      {/* Modal chỉnh sửa dịch vụ */}
+      {filteredServices.length > 0 && (
+        <Pagination
+          count={totalPages}
+          page={page}
+          onChange={handlePageChange}
+          color="primary"
+          className="mt-4"
+          siblingCount={1}
+          boundaryCount={1}
+        />
+      )}
+
       <ServiceEdit
         open={openEdit}
         onClose={() => setOpenEdit(false)}
@@ -163,7 +220,6 @@ const Services = () => {
         }}
       />
 
-      {/* Modal xem chi tiết */}
       <Modal open={openView} onClose={handleCloseView}>
         <div
           style={{
@@ -171,6 +227,8 @@ const Services = () => {
             maxWidth: "500px",
             margin: "auto",
             backgroundColor: "white",
+            borderRadius: "8px",
+            marginTop: "50px",
           }}
         >
           <h3>Chi tiết dịch vụ</h3>
