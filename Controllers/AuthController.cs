@@ -25,7 +25,6 @@ namespace BookingSalonHair.Controllers
         }
 
         // POST: api/Auth/register
-        // POST: api/Auth/register
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterDTO model)
@@ -33,18 +32,15 @@ namespace BookingSalonHair.Controllers
             if (string.IsNullOrWhiteSpace(model.Email))
                 return BadRequest("Email không được để trống.");
 
-            // Kiểm tra tồn tại email
             if (await _context.Users.AnyAsync(u => u.Email == model.Email))
-            {
                 return BadRequest("Email đã được sử dụng.");
-            }
+
+            if (await _context.Users.AnyAsync(u => u.Phone == model.Phone))
+                return BadRequest("Số điện thoại đã được sử dụng.");
 
             if (string.IsNullOrWhiteSpace(model.Password))
-            {
                 return BadRequest("Mật khẩu không được để trống.");
-            }
 
-            // Mã hóa password (bảo mật hơn cần sử dụng giải pháp mã hóa thực tế)
             var user = new User
             {
                 FullName = model.FullName,
@@ -52,30 +48,18 @@ namespace BookingSalonHair.Controllers
                 PasswordHash = Convert.ToBase64String(Encoding.UTF8.GetBytes(model.Password)),
                 Phone = model.Phone,
                 Role = model.Role,
-                IsGuest = model.IsGuest // Role có thể là "Admin", "Staff", hoặc "Customer"
+                IsGuest = model.IsGuest
             };
 
-            // Thêm người dùng vào database
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
-
-            // Nếu là nhân viên, tạo thêm entry trong bảng Staff
-            if (user.Role.ToLower() == "staff")
-            {
-                var staff = new User
-                {
-                    Id = user.Id,
-                    // Bạn có thể thêm các thông tin khác của nhân viên ở đây
-                };
-                _context.Users.Add(staff);
-                await _context.SaveChangesAsync();
-            }
 
             return Ok(new { message = "Đăng ký thành công" });
         }
 
 
-        
+
+
         // POST: api/Auth/login
         [HttpPost("login")]
         [AllowAnonymous]

@@ -230,6 +230,14 @@ const Appointment = () => {
     <div className="container mt-4">
       <h2 className="mb-4">Danh sách cuộc hẹn</h2>
       <Stack direction="row" spacing={2} className="mb-4">
+      <Button
+          variant="contained"
+          color="primary"
+          onClick={handleAddClick}
+          startIcon={<i className="fas fa-plus"></i>}
+        >
+          Thêm lịch hẹn
+        </Button>
         <TextField
           label="Tìm kiếm khách hàng"
           variant="outlined"
@@ -240,14 +248,7 @@ const Appointment = () => {
         <Button variant="contained" onClick={handleSortToggle}>
           Sắp xếp theo ngày ({sortOrder === "asc" ? "Tăng" : "Giảm"})
         </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleAddClick}
-          startIcon={<i className="fas fa-plus"></i>}
-        >
-          Thêm lịch hẹn
-        </Button>
+        
         <Button
           variant="contained"
           color="secondary"

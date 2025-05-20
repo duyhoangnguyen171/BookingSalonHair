@@ -1261,44 +1261,6 @@
           }
         }
       }
-    },
-    "/api/WorkShifts/Register": {
-      "post": {
-        "tags": [
-          "WorkShifts"
-        ],
-        "parameters": [
-          {
-            "name": "shiftId",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "staffId",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "customerId",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
     }
   },
   "components": {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import WorkShiftService from "../../services/WorkShiftService";
-
+import "../../asset/styles/workshift/WorkShiftDetails.css";
 const WorkShiftDetail = () => {
   const { shiftId } = useParams();
   const [data, setData] = useState(null);
@@ -13,8 +13,12 @@ const WorkShiftDetail = () => {
       try {
         const result = await WorkShiftService.getById(shiftId);
         console.log("API trả về:", result);
+
         setData(result);
         setError(null);
+
+        const registeredStaffs = result.registeredStaffs?.$values ?? [];
+        console.log("Nhân viên đã đăng ký:", registeredStaffs);
       } catch (error) {
         console.error("Không thể tải dữ liệu ca làm:", error);
         setError("Không thể tải dữ liệu ca làm.");
@@ -41,106 +45,129 @@ const WorkShiftDetail = () => {
       setAssigning(false);
     }
   };
+
   const approveStaff = async (userId) => {
-  try {
-    // Ép kiểu chuyển shiftId và userId thành số
-    const workshiftId = parseInt(shiftId, 10); // shiftId là biến có sẵn trong scope
-    const userIdNumber = parseInt(userId, 10);
+    try {
+      const workshiftId = parseInt(shiftId, 10);
+      const userIdNumber = parseInt(userId, 10);
 
-    console.log("Gửi yêu cầu duyệt nhân viên với dữ liệu:", {
-      workshiftId,
-      userId: userIdNumber,
-    });
+      console.log("Duyệt nhân viên:", { workshiftId, userId: userIdNumber });
 
-    // Gửi yêu cầu API
-    await WorkShiftService.approveStaff(workshiftId, userIdNumber);
+      await WorkShiftService.approveStaff(workshiftId, userIdNumber);
 
-    const updated = await WorkShiftService.getById(workshiftId);
-    setData(updated);
-    setError(null);
-    alert("Nhân viên đã được duyệt.");
-  } catch (err) {
-    console.error("Lỗi khi duyệt nhân viên:", err);
-    setError("Lỗi khi duyệt nhân viên.");
-  }
-};
+      const updated = await WorkShiftService.getById(workshiftId);
+      setData(updated);
+      setError(null);
+      alert("Nhân viên đã được duyệt.");
+    } catch (err) {
+      console.error("Lỗi khi duyệt nhân viên:", err);
+      setError("Lỗi khi duyệt nhân viên.");
+    }
+  };
 
   if (!data) return <div>Đang tải dữ liệu...</div>;
 
   const appointments = data.appointments?.$values ?? [];
   const registeredStaffs = data.registeredStaffs?.$values ?? [];
 
+  const renderName = (value) => {
+    if (typeof value === "string") return value;
+    if (typeof value === "object" && value !== null) {
+      return JSON.stringify(value);
+    }
+    return "Không xác định";
+  };
+
   return (
-    <div style={{ display: "flex", gap: "40px" }}>
-      {/* Danh sách lịch hẹn */}
-      <div style={{ flex: 1 }}>
-        <h3>Danh sách lịch hẹn</h3>
-        {appointments.length === 0 ? (
-          <p>Chưa có lịch nào</p>
-        ) : (
-          appointments.map((appt) => (
-            <div
-              key={appt.id}
-              style={{
-                border: "1px solid gray",
-                padding: 10,
-                marginBottom: 10,
-              }}
+  <div style={{ display: "flex", gap: "40px" }}>
+    {/* Danh sách lịch hẹn - chiếm 7 phần */}
+    <div style={{ flex: 7 }}>
+      <h3>Danh sách lịch hẹn</h3>
+      {appointments.length === 0 ? (
+        <p>Chưa có lịch nào</p>
+      ) : (
+        appointments.map((appt) => (
+          <div
+            key={appt.id}
+            style={{
+              border: "1px solid gray",
+              padding: 10,
+              marginBottom: 10,
+            }}
+          >
+            <p>
+              <strong>Khách:</strong>{" "}
+              {renderName(appt.customerName) || "Chưa có"}
+            </p>
+            <p>
+              <strong>Nhân viên:</strong>{" "}
+              {renderName(appt.staffName) || "Chưa gán"}
+            </p>
+            <label>Chọn nhân viên khác:</label>
+            <select
+              onChange={(e) =>
+                assignStaff(appt.id, parseInt(e.target.value))
+              }
+              disabled={assigning}
+              defaultValue=""
             >
-              <p>
-                <strong>Khách:</strong> {appt.customerName || "Chưa có"}
-              </p>
-              <p>
-                <strong>Nhân viên:</strong> {appt.staffName || "Chưa gán"}
-              </p>
-              <label>Chọn nhân viên khác:</label>
-              <select
-                onChange={(e) => assignStaff(appt.id, parseInt(e.target.value))}
-                disabled={assigning}
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  -- Chọn nhân viên --
-                </option>
-                {registeredStaffs.map((staff) => (
+              <option value="" disabled>
+                -- Chọn nhân viên --
+              </option>
+              {registeredStaffs
+                .filter((staff) => staff.isApproved === true)
+                .map((staff) => (
                   <option key={staff.id} value={staff.id}>
-                    {staff.fullName}
+                    {renderName(staff.fullName)}
                   </option>
                 ))}
-              </select>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* Nhân viên đã đăng ký */}
-      <div style={{ flex: 1 }}>
-        <h3>Nhân viên đã đăng ký</h3>
-        {registeredStaffs.length === 0 ? (
-          <p>Chưa có nhân viên đăng ký</p>
-        ) : (
-          <ul>
-            {registeredStaffs.map((s) => (
-              <li key={s.id}>
-                {s.fullName}
-                {!s.isApproved && (
-                  <button
-                    onClick={() => approveStaff(s.id)}
-                    style={{ marginLeft: "10px" }}
-                  >
-                    Duyệt
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      {/* Hiển thị thông báo lỗi nếu có */}
-      {error && <div className="error">{error}</div>}
+            </select>
+          </div>
+        ))
+      )}
     </div>
-  );
+
+    {/* Nhân viên đã đăng ký - chiếm 3 phần */}
+    <div style={{ flex: 3 }}>
+      <h3>Nhân viên đã đăng ký</h3>
+      {registeredStaffs.length === 0 ? (
+        <p>Chưa có nhân viên đăng ký</p>
+      ) : (
+        <ul>
+          {registeredStaffs.map((s) => (
+            <li key={s.id}>
+              {renderName(s.fullName)}
+              {s.isApproved ? (
+                <span
+                  style={{
+                    marginLeft: "10px",
+                    color: "green",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Đã duyệt
+                </span>
+              ) : (
+                <button
+                  onClick={() => approveStaff(s.id)}
+                  style={{ marginLeft: "10px" }}
+                >
+                  Duyệt
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+
+    {/* Hiển thị lỗi nếu có */}
+    {error && (
+      <div style={{ color: "red", fontWeight: "bold" }}>{error}</div>
+    )}
+  </div>
+);
+
 };
 
 export default WorkShiftDetail;

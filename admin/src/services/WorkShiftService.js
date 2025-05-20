@@ -4,6 +4,7 @@ import axios from "axios";
 
 const BASE_URL = "https://localhost:7169/api";
 const API_URL = `${BASE_URL}/WorkShifts`;
+const API_URL_ARS= `${BASE_URL}/UserWorkShift`;
 const STAFF_NOT_REGISTERED_URL = `${BASE_URL}/UserWorkShift/staff-not-registered`;
 const REGISTER_URL = `${BASE_URL}/UserWorkShift/Register`;
 const BOOKED_BY_STAFF_URL = `${BASE_URL}/Users/bookedByStaff`;
@@ -93,29 +94,23 @@ const WorkShiftService = {
       throw error;
     }
   },
- approveStaff: async (workshiftId, userId) => {
-  // Ép kiểu để đảm bảo dữ liệu đúng
-  let shiftIdNumber = parseInt(workshiftId, 10);
-  let userIdNumber = parseInt(userId, 10);
+  approveStaff: async (workshiftId, userId) => {
+  const authHeader = getAuthHeader();
 
-  // Kiểm tra dữ liệu hợp lệ
-  if (isNaN(shiftIdNumber) || isNaN(userIdNumber)) {
-    throw new Error("Dữ liệu không hợp lệ.");
-  }
-
-  // Gửi yêu cầu phê duyệt nhân viên có đính kèm token
-  const response = await axios.put(`${API_URL}/Approve`, null, {
-    params: {
-      workshiftId: shiftIdNumber,
-      userId: userIdNumber,
-    },
-    headers: getAuthHeader(), // 👈 chèn token vào header
-  });
+  const response = await axios.put(
+    `${API_URL_ARS}/Approve`,
+    null,
+    {
+      params: {
+        workShiftId: workshiftId,
+        userId: userId,
+      },
+      headers: authHeader.headers,
+    }
+  );
 
   return response.data;
 },
-
-
 
   // Lấy ca làm theo StaffId
   getByStaffId: async (staffId) => {
