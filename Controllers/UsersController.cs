@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using BookingSalonHair.DTOs;
 using BookingSalonHair.Models;
@@ -24,20 +25,49 @@ namespace BookingSalonHair.Controllers
 
         // GET: api/Users
         [HttpGet]
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "admin,staff,customer")]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
-            return await _context.Users.ToListAsync();
+            // Lấy ID của người dùng hiện tại từ token
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentUserId = int.Parse(userId);
+
+            // Nếu là admin, trả về toàn bộ danh sách người dùng
+            if (User.IsInRole("admin"))
+            {
+                var allUsers = await _context.Users
+                    .AsNoTracking()
+                    .ToListAsync();
+                return Ok(allUsers);
+            }
+
+            // Nếu không phải admin, chỉ trả về thông tin của chính người dùng hiện tại
+            var currentUser = await _context.Users
+                .AsNoTracking()
+                .Where(u => u.Id == currentUserId)
+                .ToListAsync();
+
+            return Ok(currentUser);
         }
 
         // GET: api/Users/5
         [HttpGet("{id}")]
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "admin,customer,staff")]
         public async Task<ActionResult<User>> GetUser(int id)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // Lấy ID của người dùng hiện tại từ token
+            var currentUserId = int.Parse(userId);
+
+            // Nếu không phải admin, chỉ được xem thông tin của chính mình
+            if (!User.IsInRole("admin") && currentUserId != id)
+            {
+                return Forbid("Bạn không có quyền xem thông tin của người dùng này.");
+            }
+
             var user = await _context.Users.FindAsync(id);
             if (user == null)
-                return NotFound();
+                return NotFound("Người dùng không tồn tại");
+
             return user;
         }
 

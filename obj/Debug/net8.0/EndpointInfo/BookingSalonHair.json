@@ -10,35 +10,29 @@
         "tags": [
           "Appointments"
         ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Appointment"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Appointment"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Appointment"
-                  }
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       },
@@ -50,17 +44,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Appointment"
+                "$ref": "#/components/schemas/AppointmentServiceCreateDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/Appointment"
+                "$ref": "#/components/schemas/AppointmentServiceCreateDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/Appointment"
+                "$ref": "#/components/schemas/AppointmentServiceCreateDto"
               }
             }
           }
@@ -1310,6 +1304,70 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "appointmentServices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppointmentService"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AppointmentService": {
+        "type": "object",
+        "properties": {
+          "appointmentId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "appointment": {
+            "$ref": "#/components/schemas/Appointment"
+          },
+          "serviceId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "service": {
+            "$ref": "#/components/schemas/Service"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AppointmentServiceCreateDto": {
+        "type": "object",
+        "properties": {
+          "appointmentDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "staffId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "workShiftId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "serviceIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1495,10 +1553,10 @@
             "type": "number",
             "format": "double"
           },
-          "appointments": {
+          "appointmentServices": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Appointment"
+              "$ref": "#/components/schemas/AppointmentService"
             },
             "nullable": true
           },

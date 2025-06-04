@@ -2,59 +2,89 @@ import axios from 'axios';
 
 // Tạo instance của axios với baseURL của API
 const api = axios.create({
-  baseURL: 'https://localhost:7169/api',  // URL của API
+  baseURL: 'https://localhost:7169/api',
 });
-const API_URL = 'https://localhost:7169/api/appointments';
-// Hàm này sẽ thiết lập token vào header Authorization
+
+// Hàm thiết lập token vào header Authorization
 export const setAuthToken = (token) => {
   if (token) {
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   } else {
-    delete api.defaults.headers.common['Authorization'];  // Nếu không có token, xóa header
+    delete api.defaults.headers.common['Authorization'];
   }
 };
 
-// Hàm để lấy token từ localStorage (hoặc sessionStorage) nếu có
+// Hàm lấy token từ localStorage
 export const getToken = () => {
   return localStorage.getItem('token');
 };
 
-// Đảm bảo rằng token được thiết lập vào header nếu có khi app load
-const token = getToken();  // Lấy token từ localStorage (hoặc sessionStorage)
+// Thiết lập token khi app load
+const token = getToken();
 if (token) {
-  setAuthToken(token);  // Nếu có token, thêm vào header
+  setAuthToken(token);
 }
 
 const getAuthHeader = () => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem('token');
   if (!token) {
-    throw new Error("Token không tồn tại. Vui lòng đăng nhập lại.");
+    console.warn('No token found, proceeding without Authorization header.');
+    return { headers: { 'Content-Type': 'application/json' } };
   }
-
   return {
     headers: {
       Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   };
 };
 
-// AppointmentService.js
+// AppointmentService
 const AppointmentService = {
-  getAll: () => api.get("/appointments", getAuthHeader()),
-  getByUserId: (userId) => api.get(`/appointments/user/${userId}`),
-  getById: (id) => api.get(`/appointments/${id}`),
-  create: (appointmentData) => api.post("/appointments", appointmentData, getAuthHeader()),
-  update: (id, appointmentData) => api.put(`/appointments/${id}`, appointmentData, getAuthHeader())
-    .catch(err => {
-      console.error("Update request failed:", err.response || err);
+  getAll: ({ page = 1, pageSize = 10, excludeCanceled = false, sort = '' } = {}) => {
+    let url = `/appointments?page=${page}&pageSize=${pageSize}`;
+    if (excludeCanceled) url += '&status!=4';
+    if (sort) url += `&sort=${sort}`;
+    return api.get(url, getAuthHeader()).catch((err) => {
+      console.error('Get all appointments failed:', err.response || err);
+      throw err;
+    });
+  },
+  getByUserId: (userId) =>
+    api.get(`/appointments/user/${userId}`, getAuthHeader()).catch((err) => {
+      console.error('Get appointments by user ID failed:', err.response || err);
       throw err;
     }),
-  cancelAppointment(appointmentId) {
-    return axios.put(`${API_URL}/${appointmentId}/cancel`, { status: 4 },getAuthHeader());
-  },
-  getCanceled: () => api.get("/appointments?status=4", getAuthHeader()),
-  delete: (id) => api.delete(`/appointments/${id}`, getAuthHeader()),
+  getById: (id) =>
+    api.get(`/appointments/${id}`, getAuthHeader()).catch((err) => {
+      console.error('Get appointment by ID failed:', err.response || err);
+      throw err;
+    }),
+  create: (appointmentData) =>
+    api.post('/appointments', appointmentData, getAuthHeader()).catch((err) => {
+      console.error('Create appointment failed:', err.response || err);
+      throw err;
+    }),
+  update: (id, appointmentData) =>
+    api.put(`/appointments/${id}`, appointmentData, getAuthHeader()).catch((err) => {
+      console.error('Update appointment failed:', err.response || err);
+      throw err;
+    }),
+  cancelAppointment: (appointmentId) =>
+    api.put(`/appointments/${appointmentId}/cancel`, { status: 4 }, getAuthHeader()).catch((err) => {
+      console.error(`Cancel appointment ${appointmentId} failed:`, err.response || err);
+      throw err;
+    }),
+  getCanceled: () =>
+    api.get('/appointments?status=4', getAuthHeader()).catch((err) => {
+      console.error('Get canceled appointments failed:', err.response || err);
+      throw err;
+    }),
+  delete: (id) =>
+    api.delete(`/appointments/${id}`, getAuthHeader()).catch((err) => {
+      console.error('Delete appointment failed:', err.response || err);
+      throw err;
+    }),
 };
 
 export default AppointmentService;

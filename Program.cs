@@ -6,21 +6,26 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using BookingSalonHair.Service;
-
+using BookingSalonHair.Helpers;
+using BookingSalonHair.Converters;
+using System.Text.Json.Serialization;
+using BookingSalonHair.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // 1️⃣ Kết nối database (Sử dụng SqlServer)
 builder.Services.AddDbContext<SalonContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<EmailHelper>();
 
 // 2️⃣ Cấu hình CORS cho ứng dụng React (port 3001)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:3001") // Cấu hình origin cho ứng dụng React
-              .AllowAnyHeader()                  // Cho phép bất kỳ header nào
-              .AllowAnyMethod();                  // Cho phép bất kỳ method HTTP nào
+        policy.WithOrigins("http://localhost:3001", "http://localhost:5173") 
+              .AllowAnyHeader()                 
+              .AllowAnyMethod();                
     });
 });
 
@@ -59,10 +64,12 @@ builder.Services.AddAuthorization();  // Thêm Authorization service để xác 
 // 4️⃣ Cấu hình Dependency Injection cho các service
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+
+builder.Services.AddScoped<IAppointmentService, BookingSalonHair.Services.AppointmentService>();
 builder.Services.AddScoped<IServiceService, ServiceService>();
 builder.Services.AddScoped<IWorkShiftService, WorkShiftService>();
 builder.Services.AddScoped<IContactService, ContactService>();
+builder.Services.AddSingleton<JwtHelper>();
 
 builder.Services.AddMemoryCache();
 //Cấu hình Swagger và JWT Bearer cho Swagger UI
@@ -70,7 +77,21 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+        options.JsonSerializerOptions.Converters.Add(new DateTimeConverterUsingDateTimeParse());
     });
+//builder.Services.AddControllers()
+//    .AddJsonOptions(options =>
+//    {
+//        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+//        options.JsonSerializerOptions.Converters.Add(new DateTimeConverterUsingDateTimeParse());
+//    });
+
+//builder.Services.AddControllers()
+//    .AddJsonOptions(options =>
+//    {
+//        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+//        //options.JsonSerializerOptions.WriteIndented = true;
+//    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {

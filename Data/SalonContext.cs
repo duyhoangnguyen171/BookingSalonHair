@@ -18,7 +18,7 @@ namespace SalonBooking.API.Data
 
         public DbSet<WorkShift> WorkShifts { get; set; }
         public DbSet<UserWorkShift> UserWorkShifts { get; set; }
-
+        public DbSet<AppointmentService> AppointmentServices { get; set; }
         public ICollection<Appointment> CustomerAppointments { get; set; } = new List<Appointment>();
         public ICollection<Appointment> StaffAppointments { get; set; } = new List<Appointment>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -40,11 +40,19 @@ namespace SalonBooking.API.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Service - Appointment (1 - nhiều)
-            modelBuilder.Entity<Appointment>()
-                .HasOne(a => a.Service)
-                .WithMany(s => s.Appointments)
-                .HasForeignKey(a => a.ServiceId)
-                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<AppointmentService>()
+    .HasKey(x => new { x.AppointmentId, x.ServiceId });
+
+            modelBuilder.Entity<AppointmentService>()
+                .HasOne(x => x.Appointment)
+                .WithMany(a => a.AppointmentServices)
+                .HasForeignKey(x => x.AppointmentId);
+
+            modelBuilder.Entity<AppointmentService>()
+                .HasOne(x => x.Service)
+                .WithMany(s => s.AppointmentServices)
+                .HasForeignKey(x => x.ServiceId);
 
             modelBuilder.Entity<Appointment>()
             .Property(a => a.AppointmentDate)

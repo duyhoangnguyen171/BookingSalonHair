@@ -41,7 +41,7 @@ if (token) {
 const ServiceService = {
   getAll: () => api.get("/services",getAuthHeader),
   getById: (id) => api.get(`/services/${id}`),
-  create: (serviceData) => api.post("/services", serviceData),
+  create: (serviceData) => api.post("/services", serviceData,getAuthHeader()),
   update: (id, serviceData) => api.put(`/services/${id}`, serviceData),
   delete: (id) => api.delete(`/services/${id}`),
 };

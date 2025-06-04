@@ -13,7 +13,6 @@ namespace BookingSalonHair.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "admin,staff")]
     public class WorkShiftsController : ControllerBase
     {
         private readonly SalonContext _context;
@@ -25,6 +24,7 @@ namespace BookingSalonHair.Controllers
 
         // GET: api/WorkShifts
         [HttpGet]
+        [Authorize(Roles = "admin,staff,customer")]
         public async Task<ActionResult<IEnumerable<WorkShift>>> GetWorkShifts()
         {
             var workShifts = await _context.WorkShifts

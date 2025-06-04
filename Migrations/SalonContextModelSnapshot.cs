@@ -70,6 +70,21 @@ namespace BookingSalonHair.Migrations
                     b.ToTable("Appointments");
                 });
 
+            modelBuilder.Entity("BookingSalonHair.Models.AppointmentService", b =>
+                {
+                    b.Property<int>("AppointmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ServiceId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AppointmentId", "ServiceId");
+
+                    b.HasIndex("ServiceId");
+
+                    b.ToTable("AppointmentServices");
+                });
+
             modelBuilder.Entity("BookingSalonHair.Models.Contact", b =>
                 {
                     b.Property<int>("Id")
@@ -255,9 +270,8 @@ namespace BookingSalonHair.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("BookingSalonHair.Models.Service", "Service")
-                        .WithMany("Appointments")
-                        .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .WithMany()
+                        .HasForeignKey("ServiceId");
 
                     b.HasOne("User", "Staff")
                         .WithMany("StaffAppointments")
@@ -276,6 +290,25 @@ namespace BookingSalonHair.Migrations
                     b.Navigation("Staff");
 
                     b.Navigation("WorkShift");
+                });
+
+            modelBuilder.Entity("BookingSalonHair.Models.AppointmentService", b =>
+                {
+                    b.HasOne("BookingSalonHair.Models.Appointment", "Appointment")
+                        .WithMany("AppointmentServices")
+                        .HasForeignKey("AppointmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BookingSalonHair.Models.Service", "Service")
+                        .WithMany("AppointmentServices")
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Appointment");
+
+                    b.Navigation("Service");
                 });
 
             modelBuilder.Entity("BookingSalonHair.Models.Contact", b =>
@@ -319,9 +352,14 @@ namespace BookingSalonHair.Migrations
                     b.Navigation("WorkShift");
                 });
 
+            modelBuilder.Entity("BookingSalonHair.Models.Appointment", b =>
+                {
+                    b.Navigation("AppointmentServices");
+                });
+
             modelBuilder.Entity("BookingSalonHair.Models.Service", b =>
                 {
-                    b.Navigation("Appointments");
+                    b.Navigation("AppointmentServices");
                 });
 
             modelBuilder.Entity("BookingSalonHair.Models.WorkShift", b =>

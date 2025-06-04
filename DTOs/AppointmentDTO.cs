@@ -14,7 +14,8 @@ namespace BookingSalonHair.DTOs
     {
         private DateTime _appointmentDate;
         public int Id { get; set; }
-        public int? ServiceId { get; set; }
+        //public int? ServiceId { get; set; }
+        public List<int>? ServiceIds { get; set; }
         public int? CustomerId { get; set; } // Người đặt lịch
         public int? StaffId { get; set; }    // Nhân viên phục vụ // UserId là khách hàng, bạn có thể thay đổi theo trường hợp của mình
         public int? WorkShiftId { get; set; }

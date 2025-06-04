@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authorization;
 using SalonBooking.API.Data;
-
+using BookingSalonHair.Helpers;
 namespace BookingSalonHair.Controllers
 {
     [Route("api/[controller]")]
@@ -17,11 +17,14 @@ namespace BookingSalonHair.Controllers
     {
         private readonly SalonContext _context;
         private readonly IConfiguration _configuration;
-
-        public AuthController(SalonContext context, IConfiguration configuration)
+        private readonly JwtHelper _jwtHelper;
+        private readonly EmailHelper _emailHelper;
+        public AuthController(SalonContext context, IConfiguration configuration, JwtHelper jwtHelper, EmailHelper emailHelper)
         {
             _context = context;
             _configuration = configuration;
+            _jwtHelper = jwtHelper;
+            _emailHelper = emailHelper;
         }
 
         // POST: api/Auth/register
@@ -77,40 +80,24 @@ namespace BookingSalonHair.Controllers
             {
                 return Unauthorized("Mật khẩu không đúng.");
             }
-
-            // Tạo Token JWT
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]);
-
-            // Các claim thông thường
-            var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-        new Claim(ClaimTypes.Name, user.FullName),
-        new Claim(ClaimTypes.Email, user.Email),
-        new Claim(ClaimTypes.Role, user.Role.ToLower()),
-         new Claim("staffId", user.Id.ToString())// Thêm Role vào claim
-    };
-
-            // Thêm claim StaffId nếu user là Staff và có trường StaffId trong bảng User
-            if (user.Role.ToLower() == "staff" && user.Id != null)
+            var token = _jwtHelper.GenerateToken(
+                userId: user.Id,
+                fullName: user.FullName,
+                email: user.Email,
+                role: user.Role,
+                staffId: user.Role.ToLower() == "staff" ? user.Id.ToString() : null
+            );
+            try
             {
-                claims.Add(new Claim("StaffId", user.Id.ToString()));
+                await _emailHelper.SendEmailAsync(user.Email, "Thông báo đăng nhập", $"Xin chào {user.FullName}, bạn đã đăng nhập vào Website BeutySalon vào lúc {DateTime.Now.ToString("HH:mm dd/MM/yyyy")}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi gửi email: {ex.Message}");
             }
 
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddHours(2),
-                Issuer = _configuration["Jwt:Issuer"],
-                Audience = _configuration["Jwt:Audience"],
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
-
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var tokenString = tokenHandler.WriteToken(token);
-
-            return Ok(new { token = tokenString });
+            return Ok(new { token });
+           
         }
     }
 }
