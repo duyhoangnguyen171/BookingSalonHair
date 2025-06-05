@@ -1,22 +1,22 @@
-import React, { useEffect, useState } from "react";
 import {
   Button,
+  Modal,
+  Pagination,
+  Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Stack,
-  Modal,
   TextField,
-  Pagination,
 } from "@mui/material";
+import { useEffect, useRef, useState } from "react";
+import "../../asset/styles/service/service.css";
 import ServiceService from "../../services/Serviceservice";
 import ServiceAdd from "./ServiceAdd";
 import ServiceEdit from "./ServiceEdit";
-
 const Services = () => {
   const [services, setServices] = useState([]);
   const [filteredServices, setFilteredServices] = useState([]);
@@ -27,7 +27,8 @@ const Services = () => {
   const [selectedService, setSelectedService] = useState(null);
   const [selectedServiceId, setSelectedServiceId] = useState(null);
   const [page, setPage] = useState(1);
-  const rowsPerPage = 8; // Maximum 10 services per page
+  const rowsPerPage = 7;
+  const inpRef = useRef();
 
   const loadServices = async () => {
     try {
@@ -51,21 +52,18 @@ const Services = () => {
     loadServices();
   }, []);
 
-  // Search effect
   useEffect(() => {
     let filtered = [...services];
-
-    // Filter by service name
     if (searchTerm) {
       filtered = filtered.filter((service) =>
         service.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
     setFilteredServices(filtered);
-    setPage(1); // Reset to page 1 when search changes
+    setPage(1);
   }, [searchTerm, services]);
 
+  
   const handleAdd = () => setOpenAdd(true);
   const handleCloseAdd = () => setOpenAdd(false);
 
@@ -102,7 +100,6 @@ const Services = () => {
     setPage(value);
   };
 
-  // Calculate pagination
   const paginatedServices = filteredServices.slice(
     (page - 1) * rowsPerPage,
     page * rowsPerPage
@@ -113,11 +110,7 @@ const Services = () => {
     <div>
       <h1>Dịch vụ</h1>
       <Stack direction="row" spacing={2} style={{ marginBottom: "20px" }}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleAdd}
-        >
+        <Button variant="contained" color="primary" onClick={handleAdd}>
           Thêm dịch vụ
         </Button>
         <TextField
@@ -143,6 +136,7 @@ const Services = () => {
           <TableHead>
             <TableRow>
               <TableCell>ID</TableCell>
+              <TableCell>Hình ảnh</TableCell>
               <TableCell>Tên dịch vụ</TableCell>
               <TableCell>Giá</TableCell>
               <TableCell>Chi tiết</TableCell>
@@ -154,6 +148,13 @@ const Services = () => {
               paginatedServices.map((service) => (
                 <TableRow key={service.id}>
                   <TableCell>{service.id}</TableCell>
+                  <TableCell>
+                    <img
+                      src={service.imageurl}
+                      className="table-image"
+                      alt={service.name}
+                    />
+                  </TableCell>
                   <TableCell>{service.name}</TableCell>
                   <TableCell>{service.price}</TableCell>
                   <TableCell>{service.description}</TableCell>
@@ -241,8 +242,19 @@ const Services = () => {
                 <strong>Giá:</strong> {selectedService.price}
               </p>
               <p>
-                <strong>Thời gian:</strong> {selectedService.durationMinutes} phút
+                <strong>Thời gian:</strong> {selectedService.durationMinutes}{" "}
+                phút
               </p>
+              {selectedService.imageUrl && (
+                <p>
+                  <strong>Ảnh:</strong>
+                  <img
+                    src={selectedService.imageUrl}
+                    alt={selectedService.name}
+                    style={{ maxWidth: "100%", maxHeight: "200px" }}
+                  />
+                </p>
+              )}
               <Button variant="outlined" onClick={handleCloseView}>
                 Đóng
               </Button>

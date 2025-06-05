@@ -53,4 +53,9 @@
   .service-add-button:hover {
     background-color: #45a049;
   }
-  
+  .table-image {
+  max-width: 50px; /* Adjust the width as needed */
+  max-height: 50px; /* Adjust the height as needed */
+  object-fit: cover; /* Ensures the image scales properly without distortion */
+  display: block; /* Prevents any unwanted spacing */
+}

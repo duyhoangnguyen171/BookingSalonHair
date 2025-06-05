@@ -4,8 +4,6 @@ E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\admin\package-lock.js
 E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\admin\package.json
 E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\admin\public\manifest.json
 E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\appsettings.json
-E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\client\giaodien4\frontend\package-lock.json
-E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\client\giaodien4\frontend\package.json
 E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\BookingSalonHair.staticwebassets.endpoints.json
 E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\BookingSalonHair.exe
 E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\BookingSalonHair.deps.json
@@ -178,4 +176,6 @@ E:\DATN\BookingSalonHair\BookingSalonHair\obj\Debug\net8.0\refint\BookingSalonHa
 E:\DATN\BookingSalonHair\BookingSalonHair\obj\Debug\net8.0\BookingSalonHair.pdb
 E:\DATN\BookingSalonHair\BookingSalonHair\obj\Debug\net8.0\BookingSalonHair.genruntimeconfig.cache
 E:\DATN\BookingSalonHair\BookingSalonHair\obj\Debug\net8.0\ref\BookingSalonHair.dll
+E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\FontendUI\package-lock.json
+E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\FontendUI\package.json
 E:\DATN\BookingSalonHair\BookingSalonHair\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
