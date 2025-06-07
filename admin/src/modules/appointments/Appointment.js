@@ -21,7 +21,6 @@ import AppointmentEdit from './AppointmentEdit';
 // Hàm giải tham chiếu vòng
 const resolveReferences = (data, cache = new Map()) => {
   if (!data) {
-    console.warn('resolveReferences received null or undefined data');
     return [];
   }
   if (typeof data !== 'object') return data;
@@ -85,7 +84,6 @@ const Appointment = () => {
       console.log('Setting page from query param:', pageParam);
       setPage(pageParam);
     } else {
-      console.log('No valid page param, defaulting to page 1');
       setPage(1);
     }
     // Clear search term on mount
@@ -95,20 +93,15 @@ const Appointment = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('Fetching data for Page:', page, 'PageSize:', rowsPerPage);
-        console.log('Token:', localStorage.getItem('token'));
         const [appointmentRes, serviceRes, userRes] = await Promise.all([
           AppointmentService.getAll({ page, pageSize: rowsPerPage }),
           ServiceService.getAll(),
           UserService.getUsers(),
         ]);
 
-        console.log('Raw API Response:', JSON.stringify(appointmentRes, null, 2));
         const appointmentData = appointmentRes.data.data
           ? resolveReferences(appointmentRes.data.data)
           : resolveReferences(appointmentRes.data) || [];
-        console.log('Processed Appointments:', appointmentData);
-        console.log('Total Pages:', appointmentRes.data.totalPages);
 
         setAppointments(appointmentData);
         setTotalPages(appointmentRes.data.totalPages || 1);
@@ -127,16 +120,12 @@ const Appointment = () => {
 
   useEffect(() => {
     let filtered = [...appointments].filter((app) => app.status !== 4);
-    console.log('Before Filter (All Appointments):', appointments.length);
-    console.log('After Status Filter (Non-Canceled):', filtered.length);
-    console.log('Search Term:', searchTerm);
 
     if (searchTerm) {
       filtered = filtered.filter((app) => {
         const customerName = app.customerFullName || '';
         return customerName.toLowerCase().includes(searchTerm.toLowerCase());
       });
-      console.log('After Search Filter:', filtered.length);
     }
 
     filtered.sort((a, b) => {
@@ -149,10 +138,8 @@ const Appointment = () => {
 
     // Only auto-switch if not on explicitly selected page
     if (filtered.length === 0 && page < totalPages) {
-      console.log('Current page empty, switching to next page:', page + 1);
       setPage(page + 1);
     } else if (filtered.length === 0 && page === totalPages) {
-      console.log('No non-canceled appointments across all pages');
     }
   }, [searchTerm, sortOrder, appointments, page, totalPages]);
 

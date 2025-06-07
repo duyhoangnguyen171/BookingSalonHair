@@ -139,12 +139,16 @@ const WorkShiftService = {
 
   // Cập nhật ca làm
   update: async (id, data) => {
+    if (!id || isNaN(id)) {
+      throw new Error("Invalid work shift ID");
+    }
     try {
       console.log("📤 Dữ liệu cập nhật:", data);
-      await axios.put(`${API_URL}/${id}`, data, getAuthHeader());
+      const response = await axios.put(`${API_URL}/${id}`, data, getAuthHeader());
+      return response.data;
     } catch (error) {
       console.error(`❌ Lỗi khi cập nhật ca làm với ID ${id}:`, error);
-      throw error;
+      throw error.response?.data?.message || error.message;
     }
   },
 

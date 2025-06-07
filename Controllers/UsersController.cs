@@ -99,7 +99,26 @@ namespace BookingSalonHair.Controllers
             return NoContent();
         }
 
+        //GET: api/Users/GetStaffs
+        [HttpGet("GetStaffs")]
+        [AllowAnonymous] // Cho phép truy cập không cần đăng nhập
+        public async Task<ActionResult<IEnumerable<UserDTO>>> GetStaffs()
+        {
+            var staffs = await _context.Users
+                .Where(u => u.Role == "staff")
+                .Select(s => new UserDTO
+                {
+                    Id = s.Id,
+                    FullName = s.FullName,
+                    Email = s.Email,
+                    Phone = s.Phone,
+                    Role = s.Role,
+                    // Thêm các thông tin khác nếu cần
+                })
+                .ToListAsync();
 
+            return Ok(staffs);
+        }
         // DELETE: api/Users/5
         [HttpDelete("{id}")]
         [Authorize(Roles = "admin")]
@@ -108,10 +127,21 @@ namespace BookingSalonHair.Controllers
             var user = await _context.Users.FindAsync(id);
             if (user == null)
                 return NotFound();
+
+            // Xóa các cuộc hẹn liên quan đến user này
+            var relatedAppointments = await _context.Appointments
+                .Where(a => a.CustomerId == id)
+                .ToListAsync();
+
+            _context.Appointments.RemoveRange(relatedAppointments);
+
             _context.Users.Remove(user);
+
             await _context.SaveChangesAsync();
+
             return NoContent();
         }
+
 
         [HttpGet("bookedByStaff/{staffId}")]
         [Authorize(Roles = "staff,admin")] // Cho cả staff và admin

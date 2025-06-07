@@ -26,19 +26,19 @@ const Sidebar = () => {
     <div className="sidebar">
       <h2>Quản Trị</h2>
       <Link to={`${basePath}/users`} className="nav-item">
-        👥 Người dùng
+        Người dùng
       </Link>
       <Link to={`${basePath}/appointments`} className="nav-item">
-        📅 Lịch hẹn
+        Lịch hẹn
       </Link>
       <Link to={`${basePath}/services`} className="nav-item">
-        ✂️ Dịch vụ
+        Dịch vụ
       </Link>
       <Link to={`${basePath}/workshifts`} className="nav-item">
-        🕒 Ca làm
+        Ca làm
       </Link>
       <Link to={`${basePath}/contact`} className="nav-item">
-        📞 Liên hệ
+        Liên hệ
       </Link>
     </div>
   );

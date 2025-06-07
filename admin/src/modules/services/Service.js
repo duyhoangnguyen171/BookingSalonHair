@@ -13,10 +13,13 @@ import {
   TextField,
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "../../asset/styles/service/service.css";
 import ServiceService from "../../services/Serviceservice";
 import ServiceAdd from "./ServiceAdd";
 import ServiceEdit from "./ServiceEdit";
+
 const Services = () => {
   const [services, setServices] = useState([]);
   const [filteredServices, setFilteredServices] = useState([]);
@@ -63,7 +66,6 @@ const Services = () => {
     setPage(1);
   }, [searchTerm, services]);
 
-  
   const handleAdd = () => setOpenAdd(true);
   const handleCloseAdd = () => setOpenAdd(false);
 
@@ -76,11 +78,25 @@ const Services = () => {
     if (window.confirm("Bạn có chắc muốn xóa dịch vụ này?")) {
       try {
         await ServiceService.delete(id);
-        alert("Dịch vụ đã bị xóa thành công!");
+        toast.success("Dịch vụ đã bị xóa thành công!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
         loadServices();
       } catch (error) {
         console.error("Lỗi khi xoá dịch vụ:", error);
-        alert("Có lỗi khi xóa dịch vụ. Vui lòng thử lại!");
+        toast.error("Có lỗi khi xóa dịch vụ. Vui lòng thử lại!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
       }
     }
   };
@@ -262,6 +278,8 @@ const Services = () => {
           )}
         </div>
       </Modal>
+
+      <ToastContainer />
     </div>
   );
 };

@@ -1,6 +1,9 @@
+
 import React, { useState } from "react";
 import WorkShiftService from "../../services/WorkShiftService";
 import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "../../asset/styles/workshift/WorkShiftCreate.css";
 
 const WorkShiftCreate = () => {
@@ -8,13 +11,11 @@ const WorkShiftCreate = () => {
 
   const [formData, setFormData] = useState({
     name: "",
-    shiftType: 0,     // 0 - sáng, 1 - chiều, 2 - tối
-    date: "",         // ngày được chọn (để tính dayOfWeek)
-    dayOfWeek: 0,     // được tính tự động từ date
+    shiftType: 0, // 0 - sáng, 1 - chiều, 2 - tối
+    date: "", // ngày được chọn (để tính dayOfWeek)
+    dayOfWeek: 0, // được tính tự động từ date
     maxUsers: 1,
   });
-
-  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -37,20 +38,48 @@ const WorkShiftCreate = () => {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    setError("");
+
+    console.log("Submitting form with payload:", formData);
 
     if (!formData.name || formData.name.trim() === "") {
-      setError("Tên ca làm không được để trống.");
+      console.log("Validation error: Empty shift name");
+      toast.error("Tên ca làm không được để trống.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "colored",
+      });
       return;
     }
 
     if (formData.maxUsers <= 0) {
-      setError("Số lượng người tối đa phải lớn hơn 0.");
+      console.log("Validation error: Invalid maxUsers");
+      toast.error("Số lượng người tối đa phải lớn hơn 0.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "colored",
+      });
       return;
     }
 
     if (!formData.date) {
-      setError("Vui lòng chọn ngày làm việc.");
+      console.log("Validation error: No date selected");
+      toast.error("Vui lòng chọn ngày làm việc.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "colored",
+      });
       return;
     }
 
@@ -61,17 +90,59 @@ const WorkShiftCreate = () => {
     };
 
     try {
+      console.log("Sending API request with payload:", payload);
       await WorkShiftService.create(payload);
-      alert("Tạo ca làm thành công!");
-      navigate("/admin/workshifts");
+      console.log("Shift created successfully");
+      toast.success("Tạo ca làm thành công!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "colored",
+      });
+      setTimeout(() => navigate("/admin/workshifts"), 3500);
     } catch (err) {
+      console.error("Error creating shift:", err);
       if (err.response?.status === 401) {
-        setError("Bạn không có quyền thực hiện hành động này.");
+        console.log("Unauthorized error (401)");
+        toast.error("Bạn không có quyền thực hiện hành động này.", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "colored",
+        });
       } else {
-        setError("Đã xảy ra lỗi khi tạo ca làm.");
-        console.error(err);
+        console.log("General error:", err.message);
+        toast.error("Đã xảy ra lỗi khi tạo ca làm.", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "colored",
+        });
       }
     }
+  };
+
+  // Test function to verify toast rendering
+  const testToast = () => {
+    console.log("Testing toast rendering");
+    toast.info("Kiểm tra toast này!", {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      theme: "colored",
+    });
   };
 
   return (
@@ -116,14 +187,24 @@ const WorkShiftCreate = () => {
             name="maxUsers"
             value={formData.maxUsers}
             onChange={handleChange}
-            min={1}
           />
         </div>
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
-
         <button type="submit">Lưu</button>
       </form>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+        style={{ zIndex: 9999 }}
+      />
     </div>
   );
 };

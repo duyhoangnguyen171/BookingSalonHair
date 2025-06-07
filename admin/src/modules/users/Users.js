@@ -17,7 +17,11 @@ import {
   MenuItem,
   TextField,
   Pagination,
+  CircularProgress,
+  Box,
 } from "@mui/material";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import UserAdd from "./UserAdd";
 import UserEdit from "./UserEdit";
@@ -34,25 +38,45 @@ const Users = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [page, setPage] = useState(1);
-  const rowsPerPage = 7; // Maximum 10 users per page
+  const [loading, setLoading] = useState(false);
+  const rowsPerPage = 7; // Maximum 7 users per page
 
   const navigate = useNavigate();
 
   const loadUsers = async () => {
+    setLoading(true);
     try {
       const data = await getUsers();
       console.log("Fetched Users:", data);
-      if (data && Array.isArray(data.$values)) {
-        setUsers(data.$values);
-        setFilteredUsers(data.$values);
-      } else {
-        setUsers([]);
-        setFilteredUsers([]);
+      const userList = Array.isArray(data.$values) ? data.$values : [];
+      setUsers(userList);
+      setFilteredUsers(userList);
+      if (userList.length === 0) {
+        toast.info("Không tìm thấy người dùng nào.", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
       }
     } catch (error) {
       console.error("Error fetching users:", error);
       setUsers([]);
       setFilteredUsers([]);
+      toast.error("Lỗi khi tải danh sách người dùng: " + (error.response?.data?.message || error.message), {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -103,17 +127,37 @@ const Users = () => {
 
   const handleCloseViewUser = () => {
     setOpenViewUser(false);
+    setSelectedUser(null);
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Bạn có chắc muốn xóa người dùng này?")) {
+      setLoading(true);
       try {
         await deleteUser(id);
-        alert("Người dùng đã bị xóa thành công!");
+        toast.success("Người dùng đã bị xóa thành công!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
         loadUsers();
       } catch (error) {
-        console.error("Lỗi khi xoá người dùng:", error);
-        alert("Có lỗi khi xóa người dùng. Vui lòng thử lại!");
+        console.error("Lỗi khi xóa người dùng:", error);
+        toast.error("Lỗi khi xóa người dùng: " + (error.response?.data?.message || error.message), {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -135,180 +179,220 @@ const Users = () => {
   const totalPages = Math.ceil(filteredUsers.length / rowsPerPage);
 
   return (
-    <div>
-      <h1>Người dùng</h1>
-      <Stack
-        direction="row"
-        spacing={2}
-        alignItems="center"
-        style={{ marginBottom: "20px" }}
-      >
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleOpenAddUser}
+    <>
+      <div>
+        <h1>Người dùng</h1>
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+          style={{ marginBottom: "20px" }}
         >
-          Thêm người dùng
-        </Button>
-        <FormControl style={{ minWidth: 150 }}>
-          <InputLabel>Lọc theo vai trò</InputLabel>
-          <Select
-            value={filterRole}
-            onChange={(e) => setFilterRole(e.target.value)}
-            label="Lọc theo vai trò"
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleOpenAddUser}
+            disabled={loading}
           >
-            <MenuItem value="all">Tất cả</MenuItem>
-            <MenuItem value="Admin">Admin</MenuItem>
-            <MenuItem value="Staff">Staff</MenuItem>
-            <MenuItem value="Customer">Customer</MenuItem>
-          </Select>
-        </FormControl>
-        <TextField
-          label="Tìm kiếm theo tên hoặc số điện thoại"
-          variant="outlined"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ minWidth: 250 }}
-        />
-      </Stack>
+            Thêm người dùng
+          </Button>
+          <FormControl style={{ minWidth: 150 }} disabled={loading}>
+            <InputLabel>Lọc theo vai trò</InputLabel>
+            <Select
+              value={filterRole}
+              onChange={(e) => setFilterRole(e.target.value)}
+              label="Lọc theo vai trò"
+            >
+              <MenuItem value="all">Tất cả</MenuItem>
+              <MenuItem value="Admin">Admin</MenuItem>
+              <MenuItem value="Staff">Staff</MenuItem>
+              <MenuItem value="Customer">Customer</MenuItem>
+            </Select>
+          </FormControl>
+          <TextField
+            label="Tìm kiếm theo tên hoặc số điện thoại"
+            variant="outlined"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ minWidth: 250 }}
+            disabled={loading}
+          />
+        </Stack>
 
-      <UserAdd
-        open={openAddUser}
-        onClose={handleCloseAddUser}
-        onSuccess={() => {
-          loadUsers();
-          handleCloseAddUser();
-        }}
-      />
-
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Họ tên</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Vai trò</TableCell>
-              <TableCell>Số điện thoại</TableCell>
-              <TableCell>Loại tài khoản</TableCell>
-              <TableCell>Hành động</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {Array.isArray(paginatedUsers) &&
-              paginatedUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>{user.id}</TableCell>
-                  <TableCell>{user.fullName}</TableCell>
-                  <TableCell>{user.email || "N/A"}</TableCell>
-                  <TableCell>{user.role}</TableCell>
-                  <TableCell>{user.phone}</TableCell>
-                  <TableCell>
-                    <Typography color={user.isGuest ? "error" : "primary"}>
-                      {getAccountType(user.isGuest)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={1}>
-                      <Button
-                        variant="outlined"
-                        color="info"
-                        size="small"
-                        onClick={() => handleViewUser(user)}
-                      >
-                        Xem
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        color="warning"
-                        size="small"
-                        onClick={() => handleEdit(user.id)}
-                      >
-                        Sửa
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        onClick={() => handleDelete(user.id)}
-                      >
-                        Xoá
-                      </Button>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {filteredUsers.length > 0 && (
-        <Pagination
-          count={totalPages}
-          page={page}
-          onChange={handlePageChange}
-          color="primary"
-          className="mt-4"
-          siblingCount={1}
-          boundaryCount={1}
-        />
-      )}
-
-      <UserEdit
-        open={openEditUser}
-        onClose={() => setOpenEditUser(false)}
-        userId={selectedUserId}
-        onSuccess={() => {
-          loadUsers();
-          setOpenEditUser(false);
-        }}
-      />
-
-      <Modal open={openViewUser} onClose={handleCloseViewUser}>
-        <div
-          style={{
-            padding: "20px",
-            maxWidth: "500px",
-            margin: "auto",
-            backgroundColor: "white",
-            borderRadius: "8px",
-            marginTop: "50px",
+        <UserAdd
+          open={openAddUser}
+          onClose={handleCloseAddUser}
+          onSuccess={() => {
+            loadUsers();
+            handleCloseAddUser();
           }}
-        >
-          <h3>Chi tiết người dùng</h3>
-          {selectedUser && (
-            <>
-              <p><strong>ID:</strong> {selectedUser.id}</p>
-              <p><strong>Họ tên:</strong> {selectedUser.fullName}</p>
-              <p><strong>Email:</strong> {selectedUser.email || "N/A"}</p>
-              <p><strong>Số điện thoại:</strong> {selectedUser.phone}</p>
-              <p><strong>Vai trò:</strong> {selectedUser.role}</p>
-              <p>
-                <strong>Loại tài khoản:</strong>{" "}
-                <Typography
-                  component="span"
-                  color={selectedUser.isGuest ? "error" : "primary"}
+        />
+
+        {loading ? (
+          <Box display="flex" justifyContent="center" py={4}>
+            <CircularProgress />
+            <Typography sx={{ ml: 2 }}>Đang tải danh sách người dùng...</Typography>
+          </Box>
+        ) : (
+          <>
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>ID</TableCell>
+                    <TableCell>Họ tên</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Vai trò</TableCell>
+                    <TableCell>Số điện thoại</TableCell>
+                    <TableCell>Loại tài khoản</TableCell>
+                    <TableCell>Hành động</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {Array.isArray(paginatedUsers) && paginatedUsers.length > 0 ? (
+                    paginatedUsers.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>{user.id}</TableCell>
+                        <TableCell>{user.fullName || "N/A"}</TableCell>
+                        <TableCell>{user.email || "N/A"}</TableCell>
+                        <TableCell>{user.role || "N/A"}</TableCell>
+                        <TableCell>{user.phone || "N/A"}</TableCell>
+                        <TableCell>
+                          <Typography color={user.isGuest ? "error" : "primary"}>
+                            {getAccountType(user.isGuest)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={1}>
+                            <Button
+                              variant="outlined"
+                              color="info"
+                              size="small"
+                              onClick={() => handleViewUser(user)}
+                              disabled={loading}
+                            >
+                              Xem
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              color="warning"
+                              size="small"
+                              onClick={() => handleEdit(user.id)}
+                              disabled={loading}
+                            >
+                              Sửa
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              color="error"
+                              size="small"
+                              onClick={() => handleDelete(user.id)}
+                              disabled={loading}
+                            >
+                              Xoá
+                            </Button>
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center">
+                        <Typography>Không có người dùng nào phù hợp.</Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            {filteredUsers.length > 0 && (
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                style={{ marginTop: "16px", display: "flex", justifyContent: "center" }}
+                siblingCount={1}
+                boundaryCount={1}
+              />
+            )}
+          </>
+        )}
+
+        <UserEdit
+          open={openEditUser}
+          onClose={() => setOpenEditUser(false)}
+          userId={selectedUserId}
+          onSuccess={() => {
+            loadUsers();
+            setOpenEditUser(false);
+          }}
+        />
+
+        <Modal open={openViewUser} onClose={handleCloseViewUser}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 500,
+              bgcolor: "background.paper",
+              borderRadius: "8px",
+              p: 3,
+              boxShadow: 24,
+            }}
+          >
+            <Typography variant="h6" gutterBottom>
+              Chi tiết người dùng
+            </Typography>
+            {selectedUser && (
+              <>
+                <Typography><strong>ID:</strong> {selectedUser.id}</Typography>
+                <Typography><strong>Họ tên:</strong> {selectedUser.fullName || "N/A"}</Typography>
+                <Typography><strong>Email:</strong> {selectedUser.email || "N/A"}</Typography>
+                <Typography><strong>Số điện thoại:</strong> {selectedUser.phone || "N/A"}</Typography>
+                <Typography><strong>Vai trò:</strong> {selectedUser.role || "N/A"}</Typography>
+                <Typography>
+                  <strong>Loại tài khoản:</strong>{" "}
+                  <Typography
+                    component="span"
+                    color={selectedUser.isGuest ? "error" : "primary"}
+                  >
+                    {getAccountType(selectedUser.isGuest)}
+                  </Typography>
+                </Typography>
+                {selectedUser.isGuest && (
+                  <Typography color="textSecondary" variant="body2" sx={{ mt: 1 }}>
+                    Lưu ý: Đây là khách vãng lai, không có email hoặc mật khẩu.
+                  </Typography>
+                )}
+                <Button
+                  variant="outlined"
+                  onClick={handleCloseViewUser}
+                  style={{ marginTop: "10px" }}
+                  disabled={loading}
                 >
-                  {getAccountType(selectedUser.isGuest)}
-                </Typography>
-              </p>
-              {selectedUser.isGuest && (
-                <Typography color="textSecondary" variant="body2">
-                  Lưu ý: Đây là khách vãng lai, không có email hoặc mật khẩu.
-                </Typography>
-              )}
-              <Button
-                variant="outlined"
-                onClick={handleCloseViewUser}
-                style={{ marginTop: "10px" }}
-              >
-                Đóng
-              </Button>
-            </>
-          )}
-        </div>
-      </Modal>
-    </div>
+                  Đóng
+                </Button>
+              </>
+            )}
+          </Box>
+        </Modal>
+      </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+    </>
   );
 };
 

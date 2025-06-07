@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import {
   Button,
@@ -17,6 +18,8 @@ import {
   Pagination,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import WorkShiftService from "../../services/WorkShiftService";
 
 const Workshift = () => {
@@ -34,7 +37,14 @@ const Workshift = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("Bạn chưa đăng nhập.");
+      toast.error("Bạn chưa đăng nhập.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       return;
     }
 
@@ -49,7 +59,14 @@ const Workshift = () => {
       payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/name"];
 
     if (!userRole || !nameId) {
-      alert("Thông tin người dùng không hợp lệ. Vui lòng đăng nhập lại.");
+      toast.error("Thông tin người dùng không hợp lệ. Vui lòng đăng nhập lại.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       return;
     }
 
@@ -59,7 +76,14 @@ const Workshift = () => {
     if (userRole === "admin" || userRole === "staff") {
       loadShifts(nameId);
     } else {
-      alert("Bạn không có quyền truy cập vào trang này.");
+      toast.error("Bạn không có quyền truy cập vào trang này.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     }
   }, []);
 
@@ -74,6 +98,14 @@ const Workshift = () => {
       setFilteredShifts(shiftData);
     } catch (err) {
       console.error("Error loading shifts:", err);
+      toast.error("Lỗi khi tải danh sách ca làm.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       setShifts([]);
       setFilteredShifts([]);
     }
@@ -112,14 +144,22 @@ const Workshift = () => {
     if (window.confirm("Bạn có chắc muốn xóa ca làm này?")) {
       try {
         await WorkShiftService.delete(id);
+         toast.success("Xóa ca làm thành công.");
         loadShifts();
       } catch (err) {
-        alert("Lỗi khi xóa ca làm.");
+        toast.error("Lỗi khi xóa ca làm.", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
       }
     }
   };
 
-   const handleRegisterShift = (shift) => {
+  const handleRegisterShift = (shift) => {
     const path = role === "admin" 
       ? `/admin/workshifts/register?shiftId=${shift.id}`
       : `/staff/workshifts/register?shiftId=${shift.id}`;
@@ -321,6 +361,7 @@ const Workshift = () => {
           </>
         )}
       </Paper>
+      <ToastContainer />
     </Box>
   );
 };

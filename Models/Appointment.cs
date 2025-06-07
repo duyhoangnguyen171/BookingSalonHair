@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 using BookingSalonHair.Models;
-
+using BookingSalonHair.DTOs;
 namespace BookingSalonHair.Models
 {
     public enum AppointmentStatus
@@ -44,6 +44,7 @@ namespace BookingSalonHair.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; 
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public ICollection<AppointmentService> AppointmentServices { get; set; } = new List<AppointmentService>();
+       
     }
 
 }

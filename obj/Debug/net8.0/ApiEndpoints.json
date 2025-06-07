@@ -87,7 +87,7 @@
       },
       {
         "Name": "appointment",
-        "Type": "BookingSalonHair.Models.Appointment",
+        "Type": "BookingSalonHair.DTOs.AppointmentUpdateDto",
         "IsRequired": true
       }
     ],
@@ -448,6 +448,26 @@
       }
     ],
     "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BookingSalonHair.Controllers.UsersController",
+    "Method": "GetStaffs",
+    "RelativePath": "api/Users/GetStaffs",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[BookingSalonHair.DTOs.UserDTO, BookingSalonHair, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
   },
   {
     "ContainingType": "BookingSalonHair.Controllers.UsersController",

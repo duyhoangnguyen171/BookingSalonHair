@@ -21,6 +21,8 @@ import AppointmentService from "../../services/AppointmentService";
 import { getStaff, createGuest } from "../../services/UserService";
 import ServiceService from "../../services/Serviceservice";
 import WorkShiftService from "../../services/WorkShiftService";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 const AppointmentAdd = ({ open, onClose, onSuccess, currentUserId }) => {
   const [appointmentData, setAppointmentData] = useState({
@@ -37,10 +39,7 @@ const AppointmentAdd = ({ open, onClose, onSuccess, currentUserId }) => {
   const [serviceList, setServiceList] = useState([]);
   const [workShifts, setWorkShifts] = useState([]);
   const [isGuest, setIsGuest] = useState(false);
-  const [guestData, setGuestData] = useState({
-    phone: "",
-    fullName: "",
-  });
+  const [guestData, setGuestData] = useState({ phone: "", fullName: "" });
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingServices, setLoadingServices] = useState(false);
@@ -48,7 +47,6 @@ const AppointmentAdd = ({ open, onClose, onSuccess, currentUserId }) => {
   const [loadingStaff, setLoadingStaff] = useState(false);
   const [loadingGuest, setLoadingGuest] = useState(false);
 
-  // Reset state when dialog opens/closes
   useEffect(() => {
     if (open) {
       setErrorMessage("");
@@ -76,18 +74,32 @@ const AppointmentAdd = ({ open, onClose, onSuccess, currentUserId }) => {
       const response = await ServiceService.getAll();
       const services = response.data?.$values || response.data || [];
       if (!services.length) {
-        setErrorMessage("Không có dịch vụ nào.");
+        toast.error("Không có dịch vụ nào.", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
       }
       setServiceList(services);
-    } catch (error) {
-      console.error("Lỗi khi lấy danh sách dịch vụ:", error.response || error);
-      setErrorMessage("Lỗi khi lấy danh sách dịch vụ.");
+    } catch {
+      toast.error("Lỗi khi lấy danh sách dịch vụ.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
     } finally {
       setLoadingServices(false);
     }
   };
 
-  // Fetch work shifts based on selected date
   useEffect(() => {
     if (!appointmentData.appointmentDate) {
       setWorkShifts([]);
@@ -103,9 +115,7 @@ const AppointmentAdd = ({ open, onClose, onSuccess, currentUserId }) => {
         const dayOfWeek = selectedDate.getDay();
         const response = await WorkShiftService.getAll();
         const shifts = response?.$values ?? response ?? [];
-        const filteredShifts = shifts.filter(
-          (shift) => shift.dayOfWeek === dayOfWeek
-        );
+        const filteredShifts = shifts.filter((s) => s.dayOfWeek === dayOfWeek);
         if (filteredShifts.length) {
           setWorkShifts(filteredShifts);
           setErrorMessage("");
@@ -115,8 +125,7 @@ const AppointmentAdd = ({ open, onClose, onSuccess, currentUserId }) => {
           setStaffList([]);
           setErrorMessage("Không có ca làm nào trong ngày này.");
         }
-      } catch (error) {
-        console.error("Lỗi khi lấy ca làm:", error.response || error);
+      } catch {
         setWorkShifts([]);
         setAppointmentData((prev) => ({ ...prev, workShiftId: "" }));
         setStaffList([]);
@@ -129,7 +138,6 @@ const AppointmentAdd = ({ open, onClose, onSuccess, currentUserId }) => {
     fetchShifts();
   }, [appointmentData.appointmentDate]);
 
-  // Fetch staff when workShiftId changes
   useEffect(() => {
     if (!appointmentData.workShiftId) {
       setStaffList([]);
@@ -162,8 +170,7 @@ const AppointmentAdd = ({ open, onClose, onSuccess, currentUserId }) => {
           setStaffList([]);
           setErrorMessage("Không có nhân viên nào đăng ký cho ca làm này.");
         }
-      } catch (error) {
-        console.error("Lỗi khi lấy chi tiết ca làm:", error.response || error);
+      } catch {
         setStaffList([]);
         setErrorMessage("Lỗi khi lấy danh sách nhân viên.");
       } finally {
@@ -174,20 +181,12 @@ const AppointmentAdd = ({ open, onClose, onSuccess, currentUserId }) => {
     fetchStaff();
   }, [appointmentData.workShiftId]);
 
-  // Handle input change
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "serviceIds") {
-      setAppointmentData((prev) => ({
-        ...prev,
-        [name]: typeof value === "string" ? value.split(",") : value,
-      }));
-    } else {
-      setAppointmentData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
+    setAppointmentData((prev) => ({
+      ...prev,
+      [name]: name === "serviceIds" ? (typeof value === "string" ? value.split(",") : value) : value,
+    }));
   };
 
   const handleGuestChange = (e) => {
@@ -195,70 +194,67 @@ const AppointmentAdd = ({ open, onClose, onSuccess, currentUserId }) => {
     setGuestData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Create guest and update customerId
   const handleGuestSelection = async () => {
     if (!guestData.phone || !guestData.fullName) {
       setErrorMessage("Vui lòng nhập đầy đủ số điện thoại và tên khách vãng lai.");
       return;
     }
-
     setLoadingGuest(true);
     setErrorMessage("");
     try {
-      let existingGuest = await createGuest(guestData);
-      if (!existingGuest) {
-        existingGuest = await createGuest(guestData);
-      }
-      if (existingGuest && existingGuest.id) {
-        setAppointmentData((prev) => ({
-          ...prev,
-          customerId: existingGuest.id,
-        }));
+      let guest = await createGuest(guestData);
+      if (!guest) guest = await createGuest(guestData);
+      if (guest?.id) {
+        setAppointmentData((prev) => ({ ...prev, customerId: guest.id }));
         setIsGuest(true);
         setErrorMessage("");
+        toast.success("Tạo khách vãng lai thành công!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
       } else {
         setErrorMessage("Không thể tạo khách vãng lai.");
       }
-    } catch (error) {
+    } catch {
       setErrorMessage("Lỗi khi tạo khách vãng lai. Vui lòng thử lại.");
+      toast.error("Lỗi khi tạo khách vãng lai.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
     } finally {
       setLoadingGuest(false);
     }
   };
 
-  // Validate appointment date-time within selected work shift time range
   const validateAppointmentTime = () => {
-    if (!appointmentData.appointmentDate || !appointmentData.workShiftId) return true;
-
-    const selectedDate = new Date(appointmentData.appointmentDate);
+    const date = new Date(appointmentData.appointmentDate);
     const shift = workShifts.find((s) => s.id === appointmentData.workShiftId);
-    if (!shift) return false;
+    if (!date || !shift) return false;
 
-    // Compose start and end datetime with appointment date
-    const startDateTime = new Date(`${selectedDate.toDateString()} ${shift.startTime}`);
-    const endDateTime = new Date(`${selectedDate.toDateString()} ${shift.endTime}`);
-
-    return selectedDate >= startDateTime && selectedDate <= endDateTime;
+    const start = new Date(`${date.toDateString()} ${shift.startTime}`);
+    const end = new Date(`${date.toDateString()} ${shift.endTime}`);
+    return date >= start && date <= end;
   };
 
-  // Submit appointment
   const handleSubmit = async () => {
     setErrorMessage("");
-
-    if (
-      !appointmentData.appointmentDate ||
-      !appointmentData.staffId ||
-      !appointmentData.serviceIds.length ||
-      !appointmentData.workShiftId
-    ) {
+    const { appointmentDate, staffId, serviceIds, workShiftId } = appointmentData;
+    if (!appointmentDate || !staffId || !serviceIds.length || !workShiftId) {
       setErrorMessage("Vui lòng điền đầy đủ thông tin, bao gồm ca làm.");
       return;
     }
-
     if (!validateAppointmentTime()) {
-      setErrorMessage(
-        "Thời gian lịch hẹn không nằm trong khoảng thời gian của ca làm."
-      );
+      setErrorMessage("Thời gian lịch hẹn không nằm trong khoảng thời gian của ca làm.");
       return;
     }
 
@@ -266,179 +262,199 @@ const AppointmentAdd = ({ open, onClose, onSuccess, currentUserId }) => {
     const payload = {
       ...appointmentData,
       customerId: appointmentData.customerId || currentUserId,
-      appointmentDate: new Date(appointmentData.appointmentDate).toISOString(),
+      appointmentDate: new Date(appointmentDate).toISOString(),
     };
 
     try {
       await AppointmentService.create(payload);
+      toast.success("Thêm lịch hẹn thành công!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
       onSuccess();
       onClose();
-    } catch (error) {
-      console.error("Lỗi khi thêm lịch hẹn:", error.response || error);
+    } catch {
       setErrorMessage("Lỗi khi thêm lịch hẹn. Vui lòng thử lại.");
+      toast.error("Lỗi khi thêm lịch hẹn.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Thêm lịch hẹn</DialogTitle>
-      <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
-          {errorMessage && (
-            <Typography color="error" variant="body2">
-              {errorMessage}
-            </Typography>
-          )}
+    <>
+      <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+        <DialogTitle>Thêm lịch hẹn</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {errorMessage && <Typography color="error">{errorMessage}</Typography>}
 
-          <TextField
-            label="Ngày giờ"
-            type="datetime-local"
-            fullWidth
-            name="appointmentDate"
-            value={appointmentData.appointmentDate}
-            onChange={handleChange}
-            InputLabelProps={{ shrink: true }}
-            disabled={loading}
-          />
-
-          <FormControl fullWidth disabled={loadingShifts || loading}>
-            <InputLabel>Ca làm</InputLabel>
-            <Select
-              name="workShiftId"
-              value={appointmentData.workShiftId}
+            <TextField
+              label="Ngày giờ"
+              type="datetime-local"
+              name="appointmentDate"
+              fullWidth
+              value={appointmentData.appointmentDate}
               onChange={handleChange}
-              label="Ca làm"
-            >
-              {loadingShifts ? (
-                <MenuItem disabled>
-                  <CircularProgress size={20} />
-                </MenuItem>
-              ) : workShifts.length > 0 ? (
-                workShifts.map((shift) => (
-                  <MenuItem key={shift.id} value={shift.id}>
-                    {shift.name} ({shift.startTime} - {shift.endTime})
-                  </MenuItem>
-                ))
-              ) : (
-                <MenuItem disabled>Không có ca làm phù hợp</MenuItem>
-              )}
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth disabled={loadingStaff || loading}>
-            <InputLabel>Nhân viên</InputLabel>
-            <Select
-              name="staffId"
-              value={appointmentData.staffId}
-              onChange={handleChange}
-              label="Nhân viên"
-            >
-              {loadingStaff ? (
-                <MenuItem disabled>
-                  <CircularProgress size={20} />
-                </MenuItem>
-              ) : staffList.length > 0 ? (
-                staffList.map((staff) => (
-                  <MenuItem key={staff.id} value={staff.id}>
-                    {staff.fullName}
-                  </MenuItem>
-                ))
-              ) : (
-                <MenuItem disabled>Chưa có nhân viên</MenuItem>
-              )}
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth disabled={loadingServices || loading}>
-            <InputLabel>Dịch vụ</InputLabel>
-            <Select
-              multiple
-              name="serviceIds"
-              value={appointmentData.serviceIds}
-              onChange={handleChange}
-              input={<OutlinedInput label="Dịch vụ" />}
-              renderValue={(selected) =>
-                serviceList
-                  .filter((service) => selected.includes(service.id))
-                  .map((service) => service.name)
-                  .join(", ")
-              }
-            >
-              {loadingServices ? (
-                <MenuItem disabled>
-                  <CircularProgress size={20} />
-                </MenuItem>
-              ) : (
-                serviceList.map((service) => (
-                  <MenuItem key={service.id} value={service.id}>
-                    <Checkbox checked={appointmentData.serviceIds.includes(service.id)} />
-                    <ListItemText primary={service.name} />
-                  </MenuItem>
-                ))
-              )}
-            </Select>
-          </FormControl>
-
-          <TextField
-            label="Ghi chú"
-            name="notes"
-            value={appointmentData.notes}
-            onChange={handleChange}
-            multiline
-            rows={3}
-            disabled={loading}
-          />
-
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Checkbox
-              checked={isGuest}
-              onChange={(e) => setIsGuest(e.target.checked)}
-              disabled={loading}
+              InputLabelProps={{ shrink: true }}
+              disabled={loading || loadingGuest}
             />
-            <Typography variant="body2">Khách vãng lai</Typography>
-          </Stack>
 
-          {isGuest && (
-            <>
-              <TextField
-                label="Số điện thoại"
-                name="phone"
-                value={guestData.phone}
-                onChange={handleGuestChange}
-                disabled={loadingGuest || loading}
-                fullWidth
-              />
-              <TextField
-                label="Họ và tên"
-                name="fullName"
-                value={guestData.fullName}
-                onChange={handleGuestChange}
-                disabled={loadingGuest || loading}
-                fullWidth
-              />
-              <Button
-                variant="outlined"
-                onClick={handleGuestSelection}
-                disabled={loadingGuest || loading}
+            <FormControl fullWidth disabled={loadingShifts || loading || loadingGuest}>
+              <InputLabel>Ca làm</InputLabel>
+              <Select
+                name="workShiftId"
+                value={appointmentData.workShiftId}
+                onChange={handleChange}
+                input={<OutlinedInput label="Ca làm" />}
               >
-                {loadingGuest ? <CircularProgress size={20} /> : "Tạo khách vãng lai"}
-              </Button>
-            </>
-          )}
-        </Stack>
-      </DialogContent>
+                {loadingShifts ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} />
+                  </MenuItem>
+                ) : workShifts.length > 0 ? (
+                  workShifts.map((shift) => (
+                    <MenuItem key={shift.id} value={shift.id}>
+                      {`${shift.name} (${shift.startTime} - ${shift.endTime})`}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>Không có ca làm phù hợp</MenuItem>
+                )}
+              </Select>
+            </FormControl>
 
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
-          Hủy
-        </Button>
-        <Button onClick={handleSubmit} variant="contained" disabled={loading}>
-          {loading ? <CircularProgress size={24} color="inherit" /> : "Lưu"}
-        </Button>
-      </DialogActions>
-    </Dialog>
+            <FormControl fullWidth disabled={loadingStaff || loading || loadingGuest}>
+              <InputLabel>Nhân viên</InputLabel>
+              <Select
+                name="staffId"
+                value={appointmentData.staffId}
+                onChange={handleChange}
+                input={<OutlinedInput label="Nhân viên" />}
+              >
+                {loadingStaff ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} />
+                  </MenuItem>
+                ) : staffList.length > 0 ? (
+                  staffList.map((staff) => (
+                    <MenuItem key={staff.id} value={staff.id}>
+                      {staff.fullName}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>Chưa có nhân viên</MenuItem>
+                )}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth disabled={loadingServices || loading || loadingGuest}>
+              <InputLabel>Dịch vụ</InputLabel>
+              <Select
+                multiple
+                name="serviceIds"
+                value={appointmentData.serviceIds}
+                onChange={handleChange}
+                input={<OutlinedInput label="Dịch vụ" />}
+                renderValue={(selected) =>
+                  serviceList
+                    .filter((s) => selected.includes(s.id))
+                    .map((s) => s.name)
+                    .join(", ")
+                }
+              >
+                {loadingServices ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} />
+                  </MenuItem>
+                ) : serviceList.length > 0 ? (
+                  serviceList.map((service) => (
+                    <MenuItem key={service.id} value={service.id}>
+                      <Checkbox checked={appointmentData.serviceIds.includes(service.id)} />
+                      <ListItemText primary={service.name} />
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>Chưa có dịch vụ</MenuItem>
+                )}
+              </Select>
+            </FormControl>
+
+            <TextField
+              label="Ghi chú"
+              name="notes"
+              fullWidth
+              multiline
+              rows={3}
+              value={appointmentData.notes}
+              onChange={handleChange}
+              disabled={loading || loadingGuest}
+            />
+
+            {!isGuest && (
+              <Stack spacing={2}>
+                <Typography variant="subtitle2">Khách vãng lai</Typography>
+                <TextField
+                  label="Họ tên"
+                  name="fullName"
+                  fullWidth
+                  value={guestData.fullName}
+                  onChange={handleGuestChange}
+                  disabled={loading || loadingGuest}
+                />
+                <TextField
+                  label="Số điện thoại"
+                  name="phone"
+                  fullWidth
+                  value={guestData.phone}
+                  onChange={handleGuestChange}
+                  disabled={loading || loadingGuest}
+                />
+                <Button
+                  variant="outlined"
+                  onClick={handleGuestSelection}
+                  disabled={loading || loadingGuest}
+                >
+                  {loadingGuest ? <CircularProgress size={24} /> : "Chọn khách vãng lai"}
+                </Button>
+              </Stack>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose} color="primary" disabled={loading || loadingGuest}>
+            Hủy
+          </Button>
+          <Button onClick={handleSubmit} color="primary" disabled={loading || loadingGuest}>
+            {loading ? <CircularProgress size={24} /> : "Thêm"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+    </>
   );
 };
 

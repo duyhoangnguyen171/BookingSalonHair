@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import WorkShiftService from "../../services/WorkShiftService";
@@ -11,15 +12,14 @@ import {
   Button,
   Paper,
   Fade,
-  Alert,
 } from "@mui/material";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const RegisterShift = () => {
   const [staffList, setStaffList] = useState([]);
   const [shiftId, setShiftId] = useState();
   const [selectedStaff, setSelectedStaff] = useState("");
-  const [message, setMessage] = useState("");
-  const [severity, setSeverity] = useState("info");
   const [shiftDetails, setShiftDetails] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -41,6 +41,14 @@ const RegisterShift = () => {
         setIsAdmin(roleArray.includes("admin"));
       } catch (error) {
         console.error("Lỗi khi giải mã token:", error);
+        toast.error("Lỗi khi giải mã thông tin đăng nhập.", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
       }
     }
   }, []);
@@ -58,9 +66,15 @@ const RegisterShift = () => {
           }
         }
       } catch (error) {
-        console.error("❌ Lỗi khi lấy dữ liệu:", error);
-        setMessage("Không thể lấy thông tin ca làm hoặc danh sách nhân viên.");
-        setSeverity("error");
+        console.error("Lỗi khi lấy dữ liệu:", error);
+        toast.error("Không thể lấy thông tin ca làm hoặc danh sách nhân viên.", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
       }
     };
 
@@ -71,8 +85,14 @@ const RegisterShift = () => {
     e.preventDefault();
 
     if (isAdmin && !selectedStaff) {
-      setMessage("Vui lòng chọn nhân viên.");
-      setSeverity("warning");
+      toast.error("Vui lòng chọn nhân viên.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       return;
     }
 
@@ -88,28 +108,49 @@ const RegisterShift = () => {
           staffIdToSend = Number(decoded.staffId);
 
           if (!staffIdToSend) {
-            setMessage("Không tìm thấy mã nhân viên trong token.");
-            setSeverity("error");
+            toast.error("Không tìm thấy mã nhân viên trong token.", {
+              position: "top-right",
+              autoClose: 3000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+            });
             return;
           }
         } catch (err) {
-          setMessage("Lỗi khi đọc token.");
-          setSeverity("error");
+          toast.error("Lỗi khi đọc token.", {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
           return;
         }
       }
     }
 
-    console.log("📤 Gửi dữ liệu:", { shiftId, staffId: staffIdToSend });
-
     try {
-      const response = await WorkShiftService.registerShift(shiftId, staffIdToSend);
-
-      setMessage(response.message || "Đăng ký thành công!");
-      setSeverity("success");
+      await WorkShiftService.registerShift(shiftId, staffIdToSend);
+      toast.success("Đăng ký ca làm thành công!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     } catch (error) {
-      setMessage(error.response?.data || "Đã xảy ra lỗi.");
-      setSeverity("error");
+      toast.error(error.response?.data || "Đã xảy ra lỗi.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       console.error(error);
     }
   };
@@ -173,14 +214,9 @@ const RegisterShift = () => {
               Đăng ký ca làm
             </Button>
           </form>
-
-          {message && (
-            <Alert severity={severity} sx={{ mt: 3 }}>
-              {message}
-            </Alert>
-          )}
         </Paper>
       </Fade>
+      <ToastContainer />
     </Box>
   );
 };

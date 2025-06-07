@@ -202,7 +202,7 @@ namespace BookingSalonHair.Controllers
                 CustomerId = dto.CustomerId,
                 StaffId = dto.StaffId,
                 WorkShiftId = dto.WorkShiftId,
-                Status = Models.AppointmentStatus.Pending,
+                Status = Models.AppointmentStatus.Accepted,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 AppointmentServices = dto.ServiceIds.Select(serviceId => new AppointmentService { ServiceId = serviceId }).ToList()
@@ -235,11 +235,9 @@ namespace BookingSalonHair.Controllers
 
 
 
-
-        // PUT: api/Appointments/5
         [HttpPut("{id}")]
         [Authorize(Roles = "staff,admin")]
-        public async Task<IActionResult> PutAppointment(int id, Appointment appointment)
+        public async Task<IActionResult> PutAppointment(int id, AppointmentUpdateDto appointment)
         {
             try
             {
@@ -250,32 +248,56 @@ namespace BookingSalonHair.Controllers
                 if (string.IsNullOrEmpty(userId))
                     return Unauthorized("Token không hợp lệ hoặc thiếu thông tin người dùng.");
 
-                var existingAppointment = await _context.Appointments.FindAsync(id);
+                var existingAppointment = await _context.Appointments
+                    .Include(a => a.AppointmentServices)
+                    .FirstOrDefaultAsync(a => a.Id == id);
                 if (existingAppointment == null)
-                    return NotFound($"Không tìm thấy lịch hẹn with ID {id}.");
+                    return NotFound($"Không tìm thấy lịch hẹn với ID {id}.");
 
                 if (existingAppointment.StaffId.ToString() != userId && !User.IsInRole("admin"))
                     return Forbid("Bạn không có quyền chỉnh sửa lịch hẹn này.");
 
-                // Ghi log AppointmentDate đầu vào
-                Console.WriteLine($"AppointmentDate đầu vào: {appointment.AppointmentDate} (Kind: {appointment.AppointmentDate.Kind})");
+                if (!_context.Users.Any(u => u.Id == appointment.CustomerId))
+                    return NotFound("Khách hàng không tồn tại.");
+                if (appointment.StaffId != null && !_context.Users.Any(u => u.Id == appointment.StaffId))
+                    return NotFound("Nhân viên không tồn tại.");
+                if (appointment.WorkShiftId != null && !_context.WorkShifts.Any(w => w.Id == appointment.WorkShiftId))
+                    return NotFound("Ca làm việc không tồn tại.");
+                if (appointment.ServiceIds == null || !appointment.ServiceIds.Any())
+                    return BadRequest("Phải chọn ít nhất một dịch vụ.");
+                var invalidServiceIds = appointment.ServiceIds
+                    .Where(sid => !_context.Services.Any(s => s.Id == sid))
+                    .ToList();
+                if (invalidServiceIds.Any())
+                    return BadRequest($"Dịch vụ không tồn tại: {string.Join(", ", invalidServiceIds)}");
 
-                // Chuẩn hóa AppointmentDate sang UTC
                 var utcAppointmentDate = DateTime.SpecifyKind(appointment.AppointmentDate.ToUniversalTime(), DateTimeKind.Utc);
+                var conflictingAppointment = await _context.Appointments
+                    .AnyAsync(a => a.Id != id
+                        && a.StaffId == appointment.StaffId
+                        && a.AppointmentDate == utcAppointmentDate
+                        && a.Status != Models.AppointmentStatus.Canceled); // Sử dụng AppointmentStatus rõ ràng
+                if (conflictingAppointment)
+                    return BadRequest("Nhân viên đã có lịch hẹn vào thời điểm này.");
+
+                Console.WriteLine($"AppointmentDate đầu vào: {appointment.AppointmentDate} (Kind: {appointment.AppointmentDate.Kind})");
                 Console.WriteLine($"AppointmentDate UTC chuẩn hóa: {utcAppointmentDate} (Kind: {utcAppointmentDate.Kind})");
 
-                // Cập nhật các trường
                 existingAppointment.AppointmentDate = utcAppointmentDate;
                 existingAppointment.CustomerId = appointment.CustomerId;
                 existingAppointment.StaffId = appointment.StaffId;
-                existingAppointment.ServiceId = appointment.ServiceId;
                 existingAppointment.WorkShiftId = appointment.WorkShiftId;
                 existingAppointment.Notes = appointment.Notes;
-                existingAppointment.Status = appointment.Status;
+                existingAppointment.Status = (Models.AppointmentStatus)appointment.Status; // Loại bỏ ép kiểu nếu namespace đã rõ ràng
+                existingAppointment.UpdatedAt = DateTime.UtcNow;
+
+                _context.AppointmentServices.RemoveRange(existingAppointment.AppointmentServices);
+                existingAppointment.AppointmentServices = appointment.ServiceIds
+                    .Select(serviceId => new AppointmentService { ServiceId = serviceId, AppointmentId = existingAppointment.Id })
+                    .ToList();
 
                 await _context.SaveChangesAsync();
-                 
-                // Ghi log AppointmentDate đã lưu
+
                 Console.WriteLine($"AppointmentDate đã lưu: {existingAppointment.AppointmentDate} (Kind: {existingAppointment.AppointmentDate.Kind})");
 
                 return NoContent();
@@ -295,6 +317,66 @@ namespace BookingSalonHair.Controllers
                 return StatusCode(500, new { error = "Lỗi server", detail = ex.Message });
             }
         }
+        //PUT: api/Appointments/5
+        //[HttpPut("{id}")]
+        //[Authorize(Roles = "staff,admin")]
+        //public async Task<IActionResult> PutAppointment(int id, Appointment appointment)
+        //{
+        //    try
+        //    {
+        //        if (id != appointment.Id)
+        //            return BadRequest("ID trong URL không khớp với ID trong payload.");
+
+        //        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        //        if (string.IsNullOrEmpty(userId))
+        //            return Unauthorized("Token không hợp lệ hoặc thiếu thông tin người dùng.");
+
+        //        var existingAppointment = await _context.Appointments.FindAsync(id);
+        //        if (existingAppointment == null)
+        //            return NotFound($"Không tìm thấy lịch hẹn with ID {id}.");
+
+        //        if (existingAppointment.StaffId.ToString() != userId && !User.IsInRole("admin"))
+        //            return Forbid("Bạn không có quyền chỉnh sửa lịch hẹn này.");
+
+        //        // Ghi log AppointmentDate đầu vào
+        //        Console.WriteLine($"AppointmentDate đầu vào: {appointment.AppointmentDate} (Kind: {appointment.AppointmentDate.Kind})");
+
+        //        // Chuẩn hóa AppointmentDate sang UTC
+        //        var utcAppointmentDate = DateTime.SpecifyKind(appointment.AppointmentDate.ToUniversalTime(), DateTimeKind.Utc);
+        //        Console.WriteLine($"AppointmentDate UTC chuẩn hóa: {utcAppointmentDate} (Kind: {utcAppointmentDate.Kind})");
+
+        //        // Cập nhật các trường
+        //        existingAppointment.AppointmentDate = utcAppointmentDate;
+        //        existingAppointment.CustomerId = appointment.CustomerId;
+        //        existingAppointment.StaffId = appointment.StaffId;
+        //        existingAppointment.ServiceId = appointment.ServiceId;
+        //        existingAppointment.WorkShiftId = appointment.WorkShiftId;
+        //        existingAppointment.Notes = appointment.Notes;
+        //        existingAppointment.Status = appointment.Status;
+
+
+        //        await _context.SaveChangesAsync();
+
+        //        // Ghi log AppointmentDate đã lưu
+        //        Console.WriteLine($"AppointmentDate đã lưu: {existingAppointment.AppointmentDate} (Kind: {existingAppointment.AppointmentDate.Kind})");
+
+        //        return NoContent();
+        //    }
+        //    catch (DbUpdateConcurrencyException)
+        //    {
+        //        if (!_context.Appointments.Any(e => e.Id == id))
+        //            return NotFound($"Lịch hẹn với ID {id} không tồn tại.");
+        //        throw;
+        //    }
+        //    catch (DbUpdateException ex)
+        //    {
+        //        return StatusCode(500, new { error = "Lỗi cơ sở dữ liệu", detail = ex.InnerException?.Message ?? ex.Message });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { error = "Lỗi server", detail = ex.Message });
+        //    }
+        //}
 
         // DELETE: api/Appointments/5
         [HttpDelete("{id}")]
