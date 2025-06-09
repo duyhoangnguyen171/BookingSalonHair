@@ -346,6 +346,164 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "BookingSalonHair.Controllers.StaffTimeSlotssController",
+    "Method": "RegisterStaffTimeSlots",
+    "RelativePath": "api/StaffTimeSlotss",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BookingSalonHair.DTOs.RegisterStaffTimeSlotDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BookingSalonHair.Controllers.StaffTimeSlotssController",
+    "Method": "DeleteStaffTimeSlots",
+    "RelativePath": "api/StaffTimeSlotss/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BookingSalonHair.Controllers.StaffTimeSlotssController",
+    "Method": "ApproveSlot",
+    "RelativePath": "api/StaffTimeSlotss/{id}/approve",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BookingSalonHair.Controllers.StaffTimeSlotssController",
+    "Method": "GetSlotsByStaffAndDate",
+    "RelativePath": "api/StaffTimeSlotss/staff/{staffId}/date/{date}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "staffId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "date",
+        "Type": "System.DateTime",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BookingSalonHair.Controllers.TimeSlotsController",
+    "Method": "CreateTimeSlot",
+    "RelativePath": "api/TimeSlots",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "timeSlotDto",
+        "Type": "BookingSalonHair.DTOs.TimeSlotsDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "BookingSalonHair.Models.TimeSlot",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "BookingSalonHair.Controllers.TimeSlotsController",
+    "Method": "UpdateTimeSlot",
+    "RelativePath": "api/TimeSlots/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "timeSlotDto",
+        "Type": "BookingSalonHair.DTOs.TimeSlotsDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BookingSalonHair.Controllers.TimeSlotsController",
+    "Method": "DeleteTimeSlot",
+    "RelativePath": "api/TimeSlots/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BookingSalonHair.Controllers.TimeSlotsController",
+    "Method": "GetTimeSlotsByWorkShiftId",
+    "RelativePath": "api/TimeSlots/{workShiftId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "workShiftId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[BookingSalonHair.Models.TimeSlot, BookingSalonHair, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
     "ContainingType": "BookingSalonHair.Controllers.UsersController",
     "Method": "GetUsers",
     "RelativePath": "api/Users",
@@ -435,16 +593,16 @@
   },
   {
     "ContainingType": "BookingSalonHair.Controllers.UsersController",
-    "Method": "CreateGuest",
-    "RelativePath": "api/Users/create-guest",
-    "HttpMethod": "POST",
+    "Method": "GetCustomerByPhone",
+    "RelativePath": "api/Users/get-customer-by-phone",
+    "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "guestDto",
-        "Type": "BookingSalonHair.DTOs.GuestCustomerDto",
-        "IsRequired": true
+        "Name": "phone",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -471,6 +629,22 @@
   },
   {
     "ContainingType": "BookingSalonHair.Controllers.UsersController",
+    "Method": "CreateGuest",
+    "RelativePath": "api/Users/guest",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "guestDto",
+        "Type": "BookingSalonHair.DTOs.GuestCustomerDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BookingSalonHair.Controllers.UsersController",
     "Method": "PutUser",
     "RelativePath": "api/Users/PutUser",
     "HttpMethod": "POST",
@@ -494,7 +668,7 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "userWorkShiftDTO",
+        "Name": "dto",
         "Type": "BookingSalonHair.DTOs.UserWorkShiftDTO",
         "IsRequired": true
       }
@@ -588,7 +762,7 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "registerWorkShiftDTO",
+        "Name": "dto",
         "Type": "BookingSalonHair.DTOs.RegisterWorkShiftDTO",
         "IsRequired": true
       }
@@ -722,8 +896,86 @@
   },
   {
     "ContainingType": "BookingSalonHair.Controllers.WorkShiftsController",
-    "Method": "CreateWorkShiftByType",
-    "RelativePath": "api/WorkShifts/by-type",
+    "Method": "GetAvailableTimeSlots",
+    "RelativePath": "api/WorkShifts/GetAvailableTimeSlots/{staffId}/{date}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "staffId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "date",
+        "Type": "System.DateTime",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[BookingSalonHair.Models.TimeSlot, BookingSalonHair, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "BookingSalonHair.Controllers.WorkShiftsController",
+    "Method": "GetStaffByDate",
+    "RelativePath": "api/WorkShifts/GetStaffByDate/{date}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "date",
+        "Type": "System.DateTime",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[User, BookingSalonHair, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "BookingSalonHair.Controllers.WorkShiftsController",
+    "Method": "GetWorkShiftId",
+    "RelativePath": "api/WorkShifts/GetWorkShiftId",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "staffId",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "date",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BookingSalonHair.Controllers.WorkShiftsController",
+    "Method": "CreateWorkShiftWithTimeSlots",
+    "RelativePath": "api/WorkShifts/with-time-slots",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
@@ -734,7 +986,17 @@
         "IsRequired": true
       }
     ],
-    "ReturnTypes": []
+    "ReturnTypes": [
+      {
+        "Type": "BookingSalonHair.Models.WorkShift",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
   },
   {
     "ContainingType": "BookingSalonHair.Controllers.WeatherForecastController",

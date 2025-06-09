@@ -178,4 +178,3 @@ E:\DATN\BookingSalonHair\BookingSalonHair\obj\Debug\net8.0\BookingSalonHair.genr
 E:\DATN\BookingSalonHair\BookingSalonHair\obj\Debug\net8.0\ref\BookingSalonHair.dll
 E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\FontendUI\package-lock.json
 E:\DATN\BookingSalonHair\BookingSalonHair\bin\Debug\net8.0\FontendUI\package.json
-E:\DATN\BookingSalonHair\BookingSalonHair\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

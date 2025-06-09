@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SalonBooking.API.Data;
 
@@ -11,9 +12,11 @@ using SalonBooking.API.Data;
 namespace BookingSalonHair.Migrations
 {
     [DbContext(typeof(SalonContext))]
-    partial class SalonContextModelSnapshot : ModelSnapshot
+    [Migration("20250608032920_AddStaffTimeSlotTable_Fixed")]
+    partial class AddStaffTimeSlotTable_Fixed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,9 +54,6 @@ namespace BookingSalonHair.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<int>("TimeSlotId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -67,8 +67,6 @@ namespace BookingSalonHair.Migrations
                     b.HasIndex("ServiceId");
 
                     b.HasIndex("StaffId");
-
-                    b.HasIndex("TimeSlotId");
 
                     b.HasIndex("WorkShiftId");
 
@@ -181,11 +179,14 @@ namespace BookingSalonHair.Migrations
 
             modelBuilder.Entity("BookingSalonHair.Models.StaffTimeSlot", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<int>("StaffId")
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<int>("TimeSlotId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsApproved")
                         .HasColumnType("bit");
@@ -193,23 +194,14 @@ namespace BookingSalonHair.Migrations
                     b.Property<DateTime>("RegisteredAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("StaffId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TimeSlotId")
-                        .HasColumnType("int");
-
                     b.Property<int>("WorkShiftId")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.HasKey("StaffId", "TimeSlotId");
 
                     b.HasIndex("TimeSlotId");
 
                     b.HasIndex("WorkShiftId");
-
-                    b.HasIndex("StaffId", "TimeSlotId")
-                        .IsUnique();
 
                     b.ToTable("StaffTimeSlots");
                 });
@@ -352,12 +344,6 @@ namespace BookingSalonHair.Migrations
                         .HasForeignKey("StaffId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("BookingSalonHair.Models.TimeSlot", "TimeSlot")
-                        .WithMany()
-                        .HasForeignKey("TimeSlotId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("BookingSalonHair.Models.WorkShift", "WorkShift")
                         .WithMany("Appointments")
                         .HasForeignKey("WorkShiftId")
@@ -368,8 +354,6 @@ namespace BookingSalonHair.Migrations
                     b.Navigation("Service");
 
                     b.Navigation("Staff");
-
-                    b.Navigation("TimeSlot");
 
                     b.Navigation("WorkShift");
                 });

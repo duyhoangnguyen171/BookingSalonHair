@@ -1,460 +1,369 @@
+// src/components/appointments/AppointmentAdd.jsx
+
 import {
   Button,
+  Checkbox,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
+  FormControlLabel,
+  InputLabel,
+  ListItemText,
+  MenuItem,
+  OutlinedInput,
+  Select,
   Stack,
   TextField,
-  MenuItem,
-  Select,
-  InputLabel,
-  FormControl,
   Typography,
-  Checkbox,
-  ListItemText,
-  OutlinedInput,
-  CircularProgress,
 } from "@mui/material";
-import React, { useState, useEffect } from "react";
-import AppointmentService from "../../services/AppointmentService";
-import { getStaff, createGuest } from "../../services/UserService";
-import ServiceService from "../../services/Serviceservice";
-import WorkShiftService from "../../services/WorkShiftService";
+import { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
+import "react-toastify/dist/ReactToastify.css";
+import AppointmentService from "../../services/AppointmentService";
+import ServiceService from "../../services/Serviceservice";
+import { createGuest, getCustomerByPhone } from "../../services/UserService";
+import WorkShiftService from "../../services/WorkShiftService";
 
 const AppointmentAdd = ({ open, onClose, onSuccess, currentUserId }) => {
   const [appointmentData, setAppointmentData] = useState({
     appointmentDate: "",
     customerId: "",
     staffId: "",
-    serviceIds: [],
     workShiftId: "",
+    serviceIds: [],
+    timeSlot: "",
     notes: "",
-    status: 0,
+    status: 2,
   });
-
+  const [isGuest, setIsGuest] = useState(false);
+  const [guestInfo, setGuestInfo] = useState({ fullName: "", phone: "" });
+  const [phoneQuery, setPhoneQuery] = useState("");
+  const [matchedCustomers, setMatchedCustomers] = useState([]);
   const [staffList, setStaffList] = useState([]);
   const [serviceList, setServiceList] = useState([]);
-  const [workShifts, setWorkShifts] = useState([]);
-  const [isGuest, setIsGuest] = useState(false);
-  const [guestData, setGuestData] = useState({ phone: "", fullName: "" });
+  const [timeSlots, setTimeSlots] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [loadingServices, setLoadingServices] = useState(false);
-  const [loadingShifts, setLoadingShifts] = useState(false);
-  const [loadingStaff, setLoadingStaff] = useState(false);
-  const [loadingGuest, setLoadingGuest] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setErrorMessage("");
-      setAppointmentData({
-        appointmentDate: "",
-        customerId: "",
-        staffId: "",
-        serviceIds: [],
-        workShiftId: "",
-        notes: "",
-        status: 0,
-      });
-      setGuestData({ phone: "", fullName: "" });
-      setIsGuest(false);
-      setStaffList([]);
-      setWorkShifts([]);
-      setServiceList([]);
+      resetState();
       fetchServices();
     }
   }, [open]);
 
+  const resetState = () => {
+    setErrorMessage("");
+    setAppointmentData({
+      appointmentDate: "",
+      customerId: "",
+      staffId: "",
+      workShiftId: "",
+      serviceIds: [],
+      timeSlot: "",
+      notes: "",
+      status: 0,
+    });
+    setGuestInfo({ fullName: "", phone: "" });
+    setPhoneQuery("");
+    setMatchedCustomers([]);
+    setTimeSlots([]);
+  };
+
   const fetchServices = async () => {
-    setLoadingServices(true);
     try {
       const response = await ServiceService.getAll();
       const services = response.data?.$values || response.data || [];
-      if (!services.length) {
-        toast.error("Không có dịch vụ nào.", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-      }
       setServiceList(services);
-    } catch {
-      toast.error("Lỗi khi lấy danh sách dịch vụ.", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
-    } finally {
-      setLoadingServices(false);
+    } catch (error) {
+      toast.error("Lỗi khi lấy danh sách dịch vụ.");
     }
   };
 
   useEffect(() => {
-    if (!appointmentData.appointmentDate) {
-      setWorkShifts([]);
-      setAppointmentData((prev) => ({ ...prev, workShiftId: "" }));
-      setStaffList([]);
-      return;
-    }
+    const fetchWorkShiftId = async () => {
+      if (!appointmentData.staffId || !appointmentData.appointmentDate) return;
 
-    const fetchShifts = async () => {
-      setLoadingShifts(true);
+      const date = new Date(appointmentData.appointmentDate)
+        .toISOString()
+        .split("T")[0];
       try {
-        const selectedDate = new Date(appointmentData.appointmentDate);
-        const dayOfWeek = selectedDate.getDay();
-        const response = await WorkShiftService.getAll();
-        const shifts = response?.$values ?? response ?? [];
-        const filteredShifts = shifts.filter((s) => s.dayOfWeek === dayOfWeek);
-        if (filteredShifts.length) {
-          setWorkShifts(filteredShifts);
-          setErrorMessage("");
-        } else {
-          setWorkShifts([]);
-          setAppointmentData((prev) => ({ ...prev, workShiftId: "" }));
-          setStaffList([]);
-          setErrorMessage("Không có ca làm nào trong ngày này.");
+        const res = await WorkShiftService.getWorkShiftId(
+          appointmentData.staffId,
+          date
+        );
+        if (res?.workShiftId) {
+          setAppointmentData((prev) => ({
+            ...prev,
+            workShiftId: res.workShiftId,
+          }));
         }
-      } catch {
-        setWorkShifts([]);
-        setAppointmentData((prev) => ({ ...prev, workShiftId: "" }));
-        setStaffList([]);
-        setErrorMessage("Lỗi khi lấy danh sách ca làm.");
-      } finally {
-        setLoadingShifts(false);
+      } catch (error) {
+        console.error("Không lấy được workShiftId:", error);
+        setErrorMessage("Không lấy được ca làm cho nhân viên này.");
       }
     };
 
-    fetchShifts();
+    fetchWorkShiftId();
+  }, [appointmentData.staffId, appointmentData.appointmentDate]);
+
+  useEffect(() => {
+    if (appointmentData.appointmentDate) {
+      const fetchStaff = async () => {
+        const formattedDate = new Date(appointmentData.appointmentDate)
+          .toISOString()
+          .split("T")[0];
+        const result = await WorkShiftService.getStaffByDate(formattedDate);
+        setStaffList(result.$values || []);
+      };
+      fetchStaff();
+    }
   }, [appointmentData.appointmentDate]);
 
   useEffect(() => {
-    if (!appointmentData.workShiftId) {
-      setStaffList([]);
-      setAppointmentData((prev) => ({ ...prev, staffId: "" }));
-      return;
-    }
-
-    const fetchStaff = async () => {
-      setLoadingStaff(true);
-      try {
-        const shift = await WorkShiftService.getById(appointmentData.workShiftId);
-        if (!shift || !shift.id) {
-          setStaffList([]);
-          setErrorMessage("Ca làm không tồn tại.");
-          return;
-        }
-
-        const staffData = shift.registeredStaffs?.$values ?? shift.registeredStaffs ?? [];
-        const formattedStaffList = staffData
-          .filter((staff) => staff && staff.id)
-          .map((staff) => ({
-            id: staff.id,
-            fullName: staff.fullName || `Nhân viên ${staff.id}`,
-          }));
-
-        if (formattedStaffList.length) {
-          setStaffList(formattedStaffList);
-          setErrorMessage("");
-        } else {
-          setStaffList([]);
-          setErrorMessage("Không có nhân viên nào đăng ký cho ca làm này.");
-        }
-      } catch {
-        setStaffList([]);
-        setErrorMessage("Lỗi khi lấy danh sách nhân viên.");
-      } finally {
-        setLoadingStaff(false);
-      }
-    };
-
-    fetchStaff();
-  }, [appointmentData.workShiftId]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setAppointmentData((prev) => ({
-      ...prev,
-      [name]: name === "serviceIds" ? (typeof value === "string" ? value.split(",") : value) : value,
-    }));
-  };
-
-  const handleGuestChange = (e) => {
-    const { name, value } = e.target;
-    setGuestData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleGuestSelection = async () => {
-    if (!guestData.phone || !guestData.fullName) {
-      setErrorMessage("Vui lòng nhập đầy đủ số điện thoại và tên khách vãng lai.");
-      return;
-    }
-    setLoadingGuest(true);
-    setErrorMessage("");
-    try {
-      let guest = await createGuest(guestData);
-      if (!guest) guest = await createGuest(guestData);
-      if (guest?.id) {
-        setAppointmentData((prev) => ({ ...prev, customerId: guest.id }));
-        setIsGuest(true);
-        setErrorMessage("");
-        toast.success("Tạo khách vãng lai thành công!", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        });
-      } else {
-        setErrorMessage("Không thể tạo khách vãng lai.");
-      }
-    } catch {
-      setErrorMessage("Lỗi khi tạo khách vãng lai. Vui lòng thử lại.");
-      toast.error("Lỗi khi tạo khách vãng lai.", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
+    if (appointmentData.appointmentDate && appointmentData.staffId) {
+      const formattedDate = new Date(appointmentData.appointmentDate)
+        .toISOString()
+        .split("T")[0];
+      WorkShiftService.getTimeSlotsByStaffAndDate(
+        appointmentData.staffId,
+        formattedDate
+      ).then((res) => {
+        setTimeSlots(res.$values || []);
       });
-    } finally {
-      setLoadingGuest(false);
     }
-  };
+  }, [appointmentData.appointmentDate, appointmentData.staffId]);
 
-  const validateAppointmentTime = () => {
-    const date = new Date(appointmentData.appointmentDate);
-    const shift = workShifts.find((s) => s.id === appointmentData.workShiftId);
-    if (!date || !shift) return false;
-
-    const start = new Date(`${date.toDateString()} ${shift.startTime}`);
-    const end = new Date(`${date.toDateString()} ${shift.endTime}`);
-    return date >= start && date <= end;
+  const handlePhoneSearch = async () => {
+    try {
+      const result = await getCustomerByPhone(phoneQuery);
+      setMatchedCustomers(result);
+    } catch (e) {
+      toast.error("Không tìm thấy khách hàng");
+      setMatchedCustomers([]);
+    }
   };
 
   const handleSubmit = async () => {
-    setErrorMessage("");
-    const { appointmentDate, staffId, serviceIds, workShiftId } = appointmentData;
-    if (!appointmentDate || !staffId || !serviceIds.length || !workShiftId) {
-      setErrorMessage("Vui lòng điền đầy đủ thông tin, bao gồm ca làm.");
-      return;
-    }
-    if (!validateAppointmentTime()) {
-      setErrorMessage("Thời gian lịch hẹn không nằm trong khoảng thời gian của ca làm.");
-      return;
-    }
-
     setLoading(true);
-    const payload = {
-      ...appointmentData,
-      customerId: appointmentData.customerId || currentUserId,
-      appointmentDate: new Date(appointmentDate).toISOString(),
-    };
-
     try {
+      let customerId = currentUserId;
+      if (isGuest) {
+        const guest = await createGuest(guestInfo);
+        customerId = guest.id;
+      } else if (matchedCustomers.length > 0) {
+        customerId = appointmentData.customerId;
+      }
+
+      const payload = {
+        ...appointmentData,
+        customerId,
+        timeSlotId: appointmentData.timeSlot,
+        appointmentDate: new Date(
+          appointmentData.appointmentDate
+        ).toISOString(),
+      };
+
       await AppointmentService.create(payload);
-      toast.success("Thêm lịch hẹn thành công!", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
-      onSuccess();
-      onClose();
-    } catch {
-      setErrorMessage("Lỗi khi thêm lịch hẹn. Vui lòng thử lại.");
-      toast.error("Lỗi khi thêm lịch hẹn.", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
+      toast.success("Thêm lịch hẹn thành công!");
+      setTimeout(() => {
+        onSuccess();
+        onClose();
+      }, 800);
+    } catch (e) {
+      toast.error("Lỗi khi thêm lịch");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <>
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-        <DialogTitle>Thêm lịch hẹn</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            {errorMessage && <Typography color="error">{errorMessage}</Typography>}
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>Thêm lịch hẹn</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2}>
+          <TextField
+            label="Ngày giờ"
+            type="date"
+            name="appointmentDate"
+            value={appointmentData.appointmentDate}
+            onChange={(e) =>
+              setAppointmentData((p) => ({
+                ...p,
+                appointmentDate: e.target.value,
+              }))
+            }
+            InputLabelProps={{ shrink: true }}
+            fullWidth
+          />
 
-            <TextField
-              label="Ngày giờ"
-              type="datetime-local"
-              name="appointmentDate"
-              fullWidth
-              value={appointmentData.appointmentDate}
-              onChange={handleChange}
-              InputLabelProps={{ shrink: true }}
-              disabled={loading || loadingGuest}
-            />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={isGuest}
+                onChange={() => setIsGuest((v) => !v)}
+              />
+            }
+            label="Khách vãng lai"
+          />
 
-            <FormControl fullWidth disabled={loadingShifts || loading || loadingGuest}>
-              <InputLabel>Ca làm</InputLabel>
-              <Select
-                name="workShiftId"
-                value={appointmentData.workShiftId}
-                onChange={handleChange}
-                input={<OutlinedInput label="Ca làm" />}
-              >
-                {loadingShifts ? (
-                  <MenuItem disabled>
-                    <CircularProgress size={20} />
-                  </MenuItem>
-                ) : workShifts.length > 0 ? (
-                  workShifts.map((shift) => (
-                    <MenuItem key={shift.id} value={shift.id}>
-                      {`${shift.name} (${shift.startTime} - ${shift.endTime})`}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>Không có ca làm phù hợp</MenuItem>
-                )}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth disabled={loadingStaff || loading || loadingGuest}>
-              <InputLabel>Nhân viên</InputLabel>
-              <Select
-                name="staffId"
-                value={appointmentData.staffId}
-                onChange={handleChange}
-                input={<OutlinedInput label="Nhân viên" />}
-              >
-                {loadingStaff ? (
-                  <MenuItem disabled>
-                    <CircularProgress size={20} />
-                  </MenuItem>
-                ) : staffList.length > 0 ? (
-                  staffList.map((staff) => (
-                    <MenuItem key={staff.id} value={staff.id}>
-                      {staff.fullName}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>Chưa có nhân viên</MenuItem>
-                )}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth disabled={loadingServices || loading || loadingGuest}>
-              <InputLabel>Dịch vụ</InputLabel>
-              <Select
-                multiple
-                name="serviceIds"
-                value={appointmentData.serviceIds}
-                onChange={handleChange}
-                input={<OutlinedInput label="Dịch vụ" />}
-                renderValue={(selected) =>
-                  serviceList
-                    .filter((s) => selected.includes(s.id))
-                    .map((s) => s.name)
-                    .join(", ")
+          {!isGuest ? (
+            <Stack spacing={1}>
+              <TextField
+                label="Số điện thoại khách"
+                value={phoneQuery}
+                onChange={(e) => setPhoneQuery(e.target.value)}
+                fullWidth
+              />
+              <Button onClick={handlePhoneSearch}>Tìm</Button>
+              {matchedCustomers.length > 0 && (
+                <FormControl fullWidth>
+                  <InputLabel>Chọn khách hàng</InputLabel>
+                  <Select
+                    name="customerId"
+                    value={appointmentData.customerId}
+                    onChange={(e) =>
+                      setAppointmentData((p) => ({
+                        ...p,
+                        customerId: e.target.value,
+                      }))
+                    }
+                  >
+                    {matchedCustomers.map((c) => (
+                      <MenuItem key={c.id} value={c.id}>
+                        {c.fullName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+            </Stack>
+          ) : (
+            <Stack spacing={1}>
+              <TextField
+                label="Họ tên khách"
+                value={guestInfo.fullName}
+                onChange={(e) =>
+                  setGuestInfo((p) => ({ ...p, fullName: e.target.value }))
                 }
-              >
-                {loadingServices ? (
-                  <MenuItem disabled>
-                    <CircularProgress size={20} />
-                  </MenuItem>
-                ) : serviceList.length > 0 ? (
-                  serviceList.map((service) => (
-                    <MenuItem key={service.id} value={service.id}>
-                      <Checkbox checked={appointmentData.serviceIds.includes(service.id)} />
-                      <ListItemText primary={service.name} />
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>Chưa có dịch vụ</MenuItem>
-                )}
-              </Select>
-            </FormControl>
+                fullWidth
+              />
+              <TextField
+                label="Số điện thoại"
+                value={guestInfo.phone}
+                onChange={(e) =>
+                  setGuestInfo((p) => ({ ...p, phone: e.target.value }))
+                }
+                fullWidth
+              />
+            </Stack>
+          )}
 
-            <TextField
-              label="Ghi chú"
-              name="notes"
-              fullWidth
-              multiline
-              rows={3}
-              value={appointmentData.notes}
-              onChange={handleChange}
-              disabled={loading || loadingGuest}
-            />
+          <FormControl fullWidth>
+            <InputLabel>Nhân viên</InputLabel>
+            <Select
+              name="staffId"
+              value={appointmentData.staffId}
+              onChange={(e) =>
+                setAppointmentData((p) => ({ ...p, staffId: e.target.value }))
+              }
+            >
+              {staffList.map((s) => (
+                <MenuItem key={s.id} value={s.id}>
+                  {s.fullName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-            {!isGuest && (
-              <Stack spacing={2}>
-                <Typography variant="subtitle2">Khách vãng lai</Typography>
-                <TextField
-                  label="Họ tên"
-                  name="fullName"
-                  fullWidth
-                  value={guestData.fullName}
-                  onChange={handleGuestChange}
-                  disabled={loading || loadingGuest}
-                />
-                <TextField
-                  label="Số điện thoại"
-                  name="phone"
-                  fullWidth
-                  value={guestData.phone}
-                  onChange={handleGuestChange}
-                  disabled={loading || loadingGuest}
-                />
+          <Typography variant="subtitle1">Khung giờ</Typography>
+          <Stack direction="row" flexWrap="wrap" gap={1}>
+            {timeSlots.map((t) => {
+              const time = new Date(
+                `1970-01-01T${t.startTime}`
+              ).toLocaleTimeString("vi-VN", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              });
+
+              const isSelected = appointmentData.timeSlot === t.id;
+
+              return (
                 <Button
-                  variant="outlined"
-                  onClick={handleGuestSelection}
-                  disabled={loading || loadingGuest}
+                  key={t.id}
+                  variant={isSelected ? "contained" : "outlined"}
+                  color={isSelected ? "primary" : "inherit"}
+                  onClick={() =>
+                    setAppointmentData((prev) => ({ ...prev, timeSlot: t.id }))
+                  }
+                  sx={{
+                    borderRadius: "20px",
+                    minWidth: "90px",
+                    padding: "6px 12px",
+                  }}
                 >
-                  {loadingGuest ? <CircularProgress size={24} /> : "Chọn khách vãng lai"}
+                  {time}
                 </Button>
-              </Stack>
-            )}
+              );
+            })}
           </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} color="primary" disabled={loading || loadingGuest}>
-            Hủy
-          </Button>
-          <Button onClick={handleSubmit} color="primary" disabled={loading || loadingGuest}>
-            {loading ? <CircularProgress size={24} /> : "Thêm"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-    </>
+
+          <FormControl fullWidth>
+            <InputLabel>Dịch vụ</InputLabel>
+            <Select
+              multiple
+              value={appointmentData.serviceIds}
+              onChange={(e) =>
+                setAppointmentData((p) => ({
+                  ...p,
+                  serviceIds: e.target.value,
+                }))
+              }
+              input={<OutlinedInput label="Dịch vụ" />}
+              renderValue={(selected) =>
+                serviceList
+                  .filter((s) => selected.includes(s.id))
+                  .map((s) => s.name)
+                  .join(", ")
+              }
+            >
+              {serviceList.map((s) => (
+                <MenuItem key={s.id} value={s.id}>
+                  <Checkbox
+                    checked={appointmentData.serviceIds.includes(s.id)}
+                  />
+                  <ListItemText primary={s.name} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <TextField
+            label="Ghi chú"
+            value={appointmentData.notes}
+            onChange={(e) =>
+              setAppointmentData((p) => ({ ...p, notes: e.target.value }))
+            }
+            fullWidth
+            multiline
+            rows={2}
+          />
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={loading}>
+          Hủy
+        </Button>
+        <Button onClick={handleSubmit} disabled={loading}>
+          {loading ? <CircularProgress size={20} /> : "Thêm"}
+        </Button>
+      </DialogActions>
+      <ToastContainer />
+    </Dialog>
   );
 };
 

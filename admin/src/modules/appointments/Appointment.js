@@ -282,9 +282,9 @@ const Appointment = () => {
     return <div style={{ color: 'red' }}>{error}</div>;
   }
 
-  if (!appointments.length && page === 1) {
-    return <div>Không có lịch hẹn nào.</div>;
-  }
+  // if (!appointments.length && page === 1) {
+  //   return <div>Không có lịch hẹn nào.</div>;
+  // }
 
   return (
     <div className="container mt-4">

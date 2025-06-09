@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SalonBooking.API.Data;
 
@@ -11,9 +12,11 @@ using SalonBooking.API.Data;
 namespace BookingSalonHair.Migrations
 {
     [DbContext(typeof(SalonContext))]
-    partial class SalonContextModelSnapshot : ModelSnapshot
+    [Migration("20250607100010_updateregisterstaff")]
+    partial class updateregisterstaff
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,9 +54,6 @@ namespace BookingSalonHair.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<int>("TimeSlotId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -67,8 +67,6 @@ namespace BookingSalonHair.Migrations
                     b.HasIndex("ServiceId");
 
                     b.HasIndex("StaffId");
-
-                    b.HasIndex("TimeSlotId");
 
                     b.HasIndex("WorkShiftId");
 
@@ -179,41 +177,6 @@ namespace BookingSalonHair.Migrations
                     b.ToTable("Services");
                 });
 
-            modelBuilder.Entity("BookingSalonHair.Models.StaffTimeSlot", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("IsApproved")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("RegisteredAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("StaffId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TimeSlotId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("WorkShiftId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TimeSlotId");
-
-                    b.HasIndex("WorkShiftId");
-
-                    b.HasIndex("StaffId", "TimeSlotId")
-                        .IsUnique();
-
-                    b.ToTable("StaffTimeSlots");
-                });
-
             modelBuilder.Entity("BookingSalonHair.Models.TimeSlot", b =>
                 {
                     b.Property<int>("Id")
@@ -231,6 +194,9 @@ namespace BookingSalonHair.Migrations
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("StaffId")
+                        .HasColumnType("int");
+
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("time");
 
@@ -238,6 +204,8 @@ namespace BookingSalonHair.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("StaffId");
 
                     b.HasIndex("WorkShiftId");
 
@@ -352,12 +320,6 @@ namespace BookingSalonHair.Migrations
                         .HasForeignKey("StaffId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("BookingSalonHair.Models.TimeSlot", "TimeSlot")
-                        .WithMany()
-                        .HasForeignKey("TimeSlotId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("BookingSalonHair.Models.WorkShift", "WorkShift")
                         .WithMany("Appointments")
                         .HasForeignKey("WorkShiftId")
@@ -368,8 +330,6 @@ namespace BookingSalonHair.Migrations
                     b.Navigation("Service");
 
                     b.Navigation("Staff");
-
-                    b.Navigation("TimeSlot");
 
                     b.Navigation("WorkShift");
                 });
@@ -415,40 +375,19 @@ namespace BookingSalonHair.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("BookingSalonHair.Models.StaffTimeSlot", b =>
+            modelBuilder.Entity("BookingSalonHair.Models.TimeSlot", b =>
                 {
                     b.HasOne("User", "Staff")
                         .WithMany()
-                        .HasForeignKey("StaffId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("BookingSalonHair.Models.TimeSlot", "TimeSlot")
-                        .WithMany()
-                        .HasForeignKey("TimeSlotId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("StaffId");
 
                     b.HasOne("BookingSalonHair.Models.WorkShift", "WorkShift")
-                        .WithMany()
+                        .WithMany("TimeSlots")
                         .HasForeignKey("WorkShiftId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Staff");
-
-                    b.Navigation("TimeSlot");
-
-                    b.Navigation("WorkShift");
-                });
-
-            modelBuilder.Entity("BookingSalonHair.Models.TimeSlot", b =>
-                {
-                    b.HasOne("BookingSalonHair.Models.WorkShift", "WorkShift")
-                        .WithMany("TimeSlots")
-                        .HasForeignKey("WorkShiftId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
 
                     b.Navigation("WorkShift");
                 });

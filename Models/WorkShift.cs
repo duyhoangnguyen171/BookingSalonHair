@@ -3,21 +3,21 @@
     public class WorkShift
     {
         public int Id { get; set; }
-        public ShiftType ShiftType { get; set; }
         public string Name { get; set; } // Ví dụ: "Ca sáng", "Ca chiều"
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
-
-        public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>(); // Khởi tạo để tránh warning
+        public DateTime Date { get; set; }
         public DayOfWeek DayOfWeek { get; set; }
         public int MaxUsers { get; set; } // Giới hạn số lượng người đăng ký
+        public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>(); // Các cuộc hẹn trong ca làm việc này
+   
         public ICollection<UserWorkShift> UserWorkShifts { get; set; }
+
+        // Thêm một danh sách các khung giờ (TimeSlots) cho ca làm việc
+        public ICollection<TimeSlot> TimeSlots { get; set; } = new List<TimeSlot>();
     }
-    public enum ShiftType
-    {
-        Morning,
-        Afternoon,
-        Evening
-    }
+
+    
+
 }
 

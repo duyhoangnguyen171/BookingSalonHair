@@ -10,7 +10,6 @@ namespace BookingSalonHair.DTOs
         public string Name { get; set; }
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
-        public ShiftType ShiftType { get; set; }
         public int MaxUsers { get; set; }
 
         public List<WorkShiftAppointmentDTO> Appointments { get; set; } = new();

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import WorkShiftService from "../../services/WorkShiftService";
 import { useNavigate } from "react-router-dom";
@@ -11,9 +10,10 @@ const WorkShiftCreate = () => {
 
   const [formData, setFormData] = useState({
     name: "",
-    shiftType: 0, // 0 - sáng, 1 - chiều, 2 - tối
     date: "", // ngày được chọn (để tính dayOfWeek)
     dayOfWeek: 0, // được tính tự động từ date
+    startTime: "08:00", // Thời gian bắt đầu (default 8:00 AM)
+    endTime: "22:00", // Thời gian kết thúc (default 10:00 PM)
     maxUsers: 1,
   });
 
@@ -26,16 +26,15 @@ const WorkShiftCreate = () => {
   };
 
   const handleDateChange = (e) => {
-    const selectedDate = new Date(e.target.value);
-    const weekday = selectedDate.getDay(); // 0 = CN, ..., 6 = Thứ 7
+  const selectedDate = new Date(e.target.value);
+  const weekday = selectedDate.getDay(); // 0 = Chủ Nhật, ..., 6 = Thứ Bảy
 
-    setFormData((prev) => ({
-      ...prev,
-      date: e.target.value,
-      dayOfWeek: weekday,
-    }));
-  };
-
+  setFormData((prev) => ({
+    ...prev,
+    date: e.target.value,
+    dayOfWeek: weekday,  // Cập nhật dayOfWeek từ ngày chọn
+  }));
+};
   const handleSave = async (e) => {
     e.preventDefault();
 
@@ -85,7 +84,6 @@ const WorkShiftCreate = () => {
 
     const payload = {
       ...formData,
-      shiftType: parseInt(formData.shiftType, 10),
       dayOfWeek: parseInt(formData.dayOfWeek, 10),
     };
 
@@ -102,7 +100,7 @@ const WorkShiftCreate = () => {
         draggable: true,
         theme: "colored",
       });
-      setTimeout(() => navigate("/admin/workshifts"), 3500);
+      // setTimeout(() => navigate("/admin/workshifts"), 3500);
     } catch (err) {
       console.error("Error creating shift:", err);
       if (err.response?.status === 401) {
@@ -131,20 +129,6 @@ const WorkShiftCreate = () => {
     }
   };
 
-  // Test function to verify toast rendering
-  const testToast = () => {
-    console.log("Testing toast rendering");
-    toast.info("Kiểm tra toast này!", {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      theme: "colored",
-    });
-  };
-
   return (
     <div style={{ padding: "1rem" }}>
       <h2>Tạo Ca Làm</h2>
@@ -158,15 +142,6 @@ const WorkShiftCreate = () => {
             onChange={handleChange}
             required
           />
-        </div>
-
-        <div>
-          <label>Loại ca:</label>
-          <select name="shiftType" value={formData.shiftType} onChange={handleChange}>
-            <option value={0}>Ca sáng</option>
-            <option value={1}>Ca chiều</option>
-            <option value={2}>Ca tối</option>
-          </select>
         </div>
 
         <div>
@@ -186,6 +161,26 @@ const WorkShiftCreate = () => {
             type="number"
             name="maxUsers"
             value={formData.maxUsers}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div>
+          <label>Giờ bắt đầu:</label>
+          <input
+            type="time"
+            name="startTime"
+            value={formData.startTime}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div>
+          <label>Giờ kết thúc:</label>
+          <input
+            type="time"
+            name="endTime"
+            value={formData.endTime}
             onChange={handleChange}
           />
         </div>

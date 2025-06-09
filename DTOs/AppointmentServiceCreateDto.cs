@@ -14,8 +14,9 @@
         public int? CustomerId { get; set; }
         public int? StaffId { get; set; }
         public int? WorkShiftId { get; set; }
-
+        public int TimeSlotId { get; set; }
         public List<int> ServiceIds { get; set; } = new();
+        public int Status { get; set; }
     }
     
 }

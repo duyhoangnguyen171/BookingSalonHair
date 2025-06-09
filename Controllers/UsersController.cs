@@ -155,41 +155,55 @@ namespace BookingSalonHair.Controllers
             return Ok(shifts);
         }
         // tạo user vãng lai
-        [HttpPost("create-guest")]
+        [HttpPost("guest")]
         public async Task<IActionResult> CreateGuest([FromBody] GuestCustomerDto guestDto)
         {
-            // Kiểm tra số điện thoại không trống
-            if (string.IsNullOrWhiteSpace(guestDto.Phone))
-                return BadRequest("Số điện thoại không được để trống.");
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            // Kiểm tra xem số điện thoại đã tồn tại chưa
             var existingUser = await _context.Users
                 .FirstOrDefaultAsync(u => u.Phone == guestDto.Phone);
 
             if (existingUser != null)
             {
-                // Nếu khách vãng lai đã tồn tại, trả về id của khách vãng lai
-                return Ok(new { id = existingUser.Id });
+                if (existingUser.IsGuest)
+                    return Ok(new { id = existingUser.Id });
+                else
+                    return Conflict(new { message = "Số điện thoại đã tồn tại cho người dùng đã đăng ký." });
             }
 
-            // Tạo khách vãng lai
             var guest = new User
             {
                 FullName = guestDto.FullName,
                 Phone = guestDto.Phone,
-                Email = null,  // Nếu là khách vãng lai, Email sẽ là null
-                PasswordHash = null,  // Chưa có mật khẩu
-                Role = "Customer",  // Vai trò khách hàng
-                IsGuest = true  // Đánh dấu là khách vãng lai
+                Email = null,
+                PasswordHash = null,
+                Role = "Customer",
+                IsGuest = true
             };
 
-            // Thêm khách vào cơ sở dữ liệu
             _context.Users.Add(guest);
             await _context.SaveChangesAsync();
 
-            // Trả về id của khách
             return Ok(new { id = guest.Id });
         }
+        [HttpGet("get-customer-by-phone")]
+        public async Task<IActionResult> GetCustomerByPhone([FromQuery] string phone)
+        {
+            if (string.IsNullOrWhiteSpace(phone))
+                return BadRequest("Số điện thoại không hợp lệ.");
+
+            var users = await _context.Users
+                .Where(u => u.Phone == phone && u.Role == "Customer")
+                .Select(u => new { u.Id, u.FullName })
+                .ToListAsync();
+
+            if (!users.Any())
+                return NotFound("Không tìm thấy khách hàng với số điện thoại này.");
+
+            return Ok(users);
+        }
+
 
     }
 }

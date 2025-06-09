@@ -39,6 +39,8 @@ namespace BookingSalonHair.Models
         public int? WorkShiftId { get; set; }
         [JsonIgnore]
         public WorkShift? WorkShift { get; set; }
+        public int TimeSlotId { get; set; }             // ✅ Foreign Key
+        public TimeSlot TimeSlot { get; set; }
 
         public AppointmentStatus Status { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; 

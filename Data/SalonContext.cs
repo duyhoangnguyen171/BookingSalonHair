@@ -1,7 +1,6 @@
 ﻿using BookingSalonHair.DTOs;
 using BookingSalonHair.Models;
 using Microsoft.EntityFrameworkCore;
-//using SalonBooking.API.Models;
 
 namespace SalonBooking.API.Data
 {
@@ -14,35 +13,79 @@ namespace SalonBooking.API.Data
         public DbSet<Gallery> Galleries { get; set; }
         public DbSet<Service> Services { get; set; }
         public DbSet<User> Users { get; set; }
-        //public DbSet<UserDTO> User { get; set; }
-
+        public DbSet<TimeSlot> TimeSlots { get; set; }
+        public DbSet<StaffTimeSlot> StaffTimeSlots { get; set; }
         public DbSet<WorkShift> WorkShifts { get; set; }
         public DbSet<UserWorkShift> UserWorkShifts { get; set; }
         public DbSet<AppointmentService> AppointmentServices { get; set; }
-        public ICollection<Appointment> CustomerAppointments { get; set; } = new List<Appointment>();
-        public ICollection<Appointment> StaffAppointments { get; set; } = new List<Appointment>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Appointment - Customer
+            // Customer - Appointment
             modelBuilder.Entity<Appointment>()
                 .HasOne(a => a.Customer)
                 .WithMany(u => u.CustomerAppointments)
                 .HasForeignKey(a => a.CustomerId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Appointment - Staff
+            // Staff - Appointment
             modelBuilder.Entity<Appointment>()
                 .HasOne(a => a.Staff)
                 .WithMany(u => u.StaffAppointments)
                 .HasForeignKey(a => a.StaffId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Service - Appointment (1 - nhiều)
+            // WorkShift - TimeSlot
+            modelBuilder.Entity<WorkShift>()
+                .HasMany(w => w.TimeSlots)
+                .WithOne(ts => ts.WorkShift)
+                .HasForeignKey(ts => ts.WorkShiftId)
+                .OnDelete(DeleteBehavior.Restrict);
 
+            // StaffTimeSlot
+            modelBuilder.Entity<StaffTimeSlot>()
+            .HasKey(st => st.Id);
+            modelBuilder.Entity<StaffTimeSlot>()
+            .Property(st => st.Id)
+            .ValueGeneratedOnAdd();
+            modelBuilder.Entity<StaffTimeSlot>()
+            .HasIndex(x => new { x.StaffId, x.TimeSlotId })
+            .IsUnique();
+
+            modelBuilder.Entity<StaffTimeSlot>()
+                .HasOne(st => st.Staff)
+                .WithMany()
+                .HasForeignKey(st => st.StaffId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<StaffTimeSlot>()
+                .HasOne(st => st.TimeSlot)
+                .WithMany()
+                .HasForeignKey(st => st.TimeSlotId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<StaffTimeSlot>()
+                .HasOne(st => st.WorkShift)
+                .WithMany()
+                .HasForeignKey(st => st.WorkShiftId)
+                .OnDelete(DeleteBehavior.Cascade); // Chỉ cascade một chiều duy nhất
+
+            // WorkShift - Appointment
+            modelBuilder.Entity<Appointment>()
+                .HasOne(a => a.WorkShift)
+                .WithMany(w => w.Appointments)
+                .HasForeignKey(a => a.WorkShiftId)
+                .OnDelete(DeleteBehavior.SetNull);
+            modelBuilder.Entity<Appointment>()
+            .HasOne(a => a.TimeSlot)
+            .WithMany()
+            .HasForeignKey(a => a.TimeSlotId)
+            .OnDelete(DeleteBehavior.Restrict);
+            // Appointment - Service
             modelBuilder.Entity<AppointmentService>()
-    .HasKey(x => new { x.AppointmentId, x.ServiceId });
+                .HasKey(x => new { x.AppointmentId, x.ServiceId });
 
             modelBuilder.Entity<AppointmentService>()
                 .HasOne(x => x.Appointment)
@@ -54,69 +97,62 @@ namespace SalonBooking.API.Data
                 .WithMany(s => s.AppointmentServices)
                 .HasForeignKey(x => x.ServiceId);
 
-            modelBuilder.Entity<Appointment>()
-            .Property(a => a.AppointmentDate)
-            .HasColumnType("datetime2")
-            .HasConversion(
-            v => v.ToUniversalTime(),
-            v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
-            // WorkShift - Appointment (1 - nhiều)
-            modelBuilder.Entity<Appointment>()
-                .HasOne(a => a.WorkShift)
-                .WithMany(w => w.Appointments)
-                .HasForeignKey(a => a.WorkShiftId)
-                .OnDelete(DeleteBehavior.SetNull);
-
-            // User - Contact (1 - nhiều)
+            // User - Contact
             modelBuilder.Entity<Contact>()
                 .HasOne(c => c.User)
                 .WithMany(u => u.Contacts)
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // User - Gallery (1 - nhiều)
+            // User - Gallery
             modelBuilder.Entity<Gallery>()
                 .HasOne(g => g.User)
                 .WithMany(u => u.Galleries)
                 .HasForeignKey(g => g.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Unique constraint: Email của User
+            // Unique Email
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
 
-            // Required và độ dài
             modelBuilder.Entity<User>()
                 .Property(u => u.FullName)
                 .IsRequired()
                 .HasMaxLength(100);
 
             modelBuilder.Entity<Service>()
-                    .Property(s => s.Name)
-                    .IsRequired()
-                    .HasMaxLength(100);
+                .Property(s => s.Name)
+                .IsRequired()
+                .HasMaxLength(100);
 
-            // Cấu hình cho Service.Price
             modelBuilder.Entity<Service>()
                 .Property(s => s.Price)
-                .HasPrecision(18, 2); // hoặc 10, 2 tùy theo yêu cầu của bạn
+                .HasPrecision(18, 2);
 
-            // UserWorkShift (bảng trung gian giữa User và WorkShift)
+            // Appointment Date format
+            modelBuilder.Entity<Appointment>()
+                .Property(a => a.AppointmentDate)
+                .HasColumnType("datetime2")
+                .HasConversion(
+                    v => v.ToUniversalTime(),
+                    v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+            // User - WorkShift
             modelBuilder.Entity<UserWorkShift>()
                 .HasKey(uws => new { uws.UserId, uws.WorkShiftId });
 
             modelBuilder.Entity<UserWorkShift>()
                 .HasOne(uws => uws.User)
                 .WithMany(u => u.UserWorkShifts)
-                .HasForeignKey(uws => uws.UserId);
+                .HasForeignKey(uws => uws.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<UserWorkShift>()
                 .HasOne(uws => uws.WorkShift)
                 .WithMany(ws => ws.UserWorkShifts)
-                .HasForeignKey(uws => uws.WorkShiftId);
+                .HasForeignKey(uws => uws.WorkShiftId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
-
     }
 }
-

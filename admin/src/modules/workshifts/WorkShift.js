@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import {
   Button,
@@ -59,14 +58,17 @@ const Workshift = () => {
       payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/name"];
 
     if (!userRole || !nameId) {
-      toast.error("Thông tin người dùng không hợp lệ. Vui lòng đăng nhập lại.", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      toast.error(
+        "Thông tin người dùng không hợp lệ. Vui lòng đăng nhập lại.",
+        {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        }
+      );
       return;
     }
 
@@ -144,7 +146,7 @@ const Workshift = () => {
     if (window.confirm("Bạn có chắc muốn xóa ca làm này?")) {
       try {
         await WorkShiftService.delete(id);
-         toast.success("Xóa ca làm thành công.");
+        toast.success("Xóa ca làm thành công.");
         loadShifts();
       } catch (err) {
         toast.error("Lỗi khi xóa ca làm.", {
@@ -160,9 +162,10 @@ const Workshift = () => {
   };
 
   const handleRegisterShift = (shift) => {
-    const path = role === "admin" 
-      ? `/admin/workshifts/register?shiftId=${shift.id}`
-      : `/staff/workshifts/register?shiftId=${shift.id}`;
+    const path =
+      role === "admin"
+        ? `/admin/workshifts/register?shiftId=${shift.id}`
+        : `/staff/workshifts/register?shiftId=${shift.id}`;
     navigate(path);
   };
 
@@ -175,20 +178,25 @@ const Workshift = () => {
     window.location.href = `http://localhost:3001/admin/workshifts/details/view/${shiftId}`;
   };
 
-  // Hàm tính ngày cụ thể dựa trên dayOfWeek
-  const getSpecificDate = (dayOfWeek) => {
-    const today = new Date();
-    const currentDay = today.getDay(); // 0 (Chủ Nhật) đến 6 (Thứ Bảy)
-    const diff = dayOfWeek - currentDay; // Tính khoảng cách đến ngày cần tìm
+  // Hàm tính ngày cụ thể dựa trên dayOfWeek và Date
+  const getSpecificDate = (dayOfWeek, date) => {
+    const today = new Date(date); // Lấy ngày từ dữ liệu
+    const currentDay = today.getDay(); // 0 = Chủ Nhật, 1 = Thứ Hai, ..., 6 = Thứ 7
+    const diff = (dayOfWeek - currentDay + 7) % 7; // Tính khoảng cách từ currentDay đến dayOfWeek cần
+
     const targetDate = new Date(today);
-    targetDate.setDate(today.getDate() + diff); // Cộng/trừ số ngày để đến đúng thứ
+    targetDate.setDate(today.getDate() + diff); // Cộng số ngày vào ngày hiện tại để tìm ngày đúng
 
     // Định dạng ngày theo dạng DD/MM/YYYY
     const day = String(targetDate.getDate()).padStart(2, "0");
     const month = String(targetDate.getMonth() + 1).padStart(2, "0");
     const year = targetDate.getFullYear();
-    return `${day}/${month}/${year}`;
+
+    return `${day}/${month}/${year}`; // Trả về ngày đúng
   };
+
+  // Kiểm tra hàm
+  console.log(getSpecificDate(2, "2025-06-13")); // Tìm ngày thứ Ba tiếp theo từ hôm nay
 
   const getDayName = (dayNumber) => {
     const days = [
@@ -295,11 +303,9 @@ const Workshift = () => {
                 >
                   <ListItemText
                     primary={<strong>{shift.name}</strong>}
-                    secondary={`Thời gian: ${shift.startTime} - ${
-                      shift.endTime
-                    }, Ngày: ${getSpecificDate(shift.dayOfWeek)} (${
-                      getDayName(shift.dayOfWeek)
-                    }), Số người tối đa: ${shift.maxUsers}`}
+                    secondary={`Thời gian: ${shift.startTime} - ${shift.endTime}, Ngày: ${getSpecificDate(shift.dayOfWeek, shift.date)} (${getDayName(
+                      shift.dayOfWeek
+                    )}), Số người tối đa: ${shift.maxUsers}`}
                   />
                   <Stack direction="row" spacing={1}>
                     <Button

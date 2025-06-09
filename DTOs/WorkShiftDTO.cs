@@ -9,7 +9,6 @@ namespace BookingSalonHair.DTOs
         public string Name { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
-        public ShiftType ShiftType { get; set; }
         public int MaxUsers { get; set; } // Giới hạn số lượng người đăng ký
     }
 }

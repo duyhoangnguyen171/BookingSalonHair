@@ -1,6 +1,8 @@
 import axios from 'axios';
-
+const BASE_URL = "https://localhost:7169/api";
+const GET_BY_PHONE_URL = `${BASE_URL}/Users/get-customer-by-phone`;
 const API_URL = 'https://localhost:7169/api/Users';
+
 const token = localStorage.getItem('authToken');
 // Lấy token từ localStorage
 const getToken = () => localStorage.getItem('token');
@@ -57,7 +59,10 @@ export const updateUser = (userId,data) => {
     }
   );
 };
-
+export const getCustomerByPhone = async (phone) => {
+   const res = await axios.get(`${GET_BY_PHONE_URL}?phone=${phone}`, getAuthHeader());
+  return res.data?.$values || res.data;
+};
 // Xóa người dùng
 export const deleteUser = (id) => {
   return axios.delete(`${API_URL}/${id}`, authHeader()).then(res => res.data);
@@ -94,7 +99,7 @@ export const createGuest = async (data) => {
     console.log("Dữ liệu gửi đi khi tạo khách vãng lai:", data);
 
     const response = await axios.post(
-      'https://localhost:7169/api/Users/create-guest', // Đảm bảo URL đúng
+      'https://localhost:7169/api/Users/guest', // Đảm bảo URL đúng
       data, // Dữ liệu gửi đi
       {
         headers: {

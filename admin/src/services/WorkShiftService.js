@@ -4,7 +4,7 @@ import axios from "axios";
 
 const BASE_URL = "https://localhost:7169/api";
 const API_URL = `${BASE_URL}/WorkShifts`;
-const API_URL_ARS= `${BASE_URL}/UserWorkShift`;
+const API_URL_ARS = `${BASE_URL}/UserWorkShift`;
 const STAFF_NOT_REGISTERED_URL = `${BASE_URL}/UserWorkShift/staff-not-registered`;
 const REGISTER_URL = `${BASE_URL}/UserWorkShift/Register`;
 const BOOKED_BY_STAFF_URL = `${BASE_URL}/Users/bookedByStaff`;
@@ -95,22 +95,18 @@ const WorkShiftService = {
     }
   },
   approveStaff: async (workshiftId, userId) => {
-  const authHeader = getAuthHeader();
+    const authHeader = getAuthHeader();
 
-  const response = await axios.put(
-    `${API_URL_ARS}/Approve`,
-    null,
-    {
+    const response = await axios.put(`${API_URL_ARS}/Approve`, null, {
       params: {
         workShiftId: workshiftId,
         userId: userId,
       },
       headers: authHeader.headers,
-    }
-  );
+    });
 
-  return response.data;
-},
+    return response.data;
+  },
 
   // Lấy ca làm theo StaffId
   getByStaffId: async (staffId) => {
@@ -130,12 +126,51 @@ const WorkShiftService = {
   create: async (data) => {
     try {
       console.log("📤 Dữ liệu gửi đi:", data);
-      await axios.post(`${API_URL}/by-type`, data, getAuthHeader());
+      await axios.post(`${API_URL}/with-time-slots`, data, getAuthHeader());
     } catch (error) {
       console.error("❌ Lỗi khi tạo ca làm mới:", error);
       throw error;
     }
   },
+  getStaffByDate: async (date) => {
+    try {
+      const formattedDate = new Date(date).toISOString(); // Đảm bảo chuyển ngày thành định dạng chuẩn ISO
+      const res = await axios.get(
+        `${API_URL}/getStaffByDate/${formattedDate}`, // Điều chỉnh URL API theo yêu cầu của bạn
+        getAuthHeader()
+      );
+      return res.data; // Dữ liệu trả về là danh sách nhân viên
+    } catch (error) {
+      console.error(
+        `❌ Lỗi khi lấy danh sách nhân viên đăng ký vào ngày ${date}:`,
+        error
+      );
+      throw error;
+    }
+  },
+  getTimeSlotsByStaffAndDate: async (staffId, date) => {
+  try {
+    const formattedDate = new Date(date).toISOString().split("T")[0]; // ✅ chỉ lấy yyyy-MM-dd
+    const res = await axios.get(
+      `${BASE_URL}/WorkShifts/GetAvailableTimeSlots/${staffId}/${formattedDate}`,
+      getAuthHeader()
+    );
+    return res.data;
+  } catch (error) {
+    console.error(
+      `❌ Lỗi khi lấy danh sách time slots của nhân viên ${staffId} vào ngày ${date}:`,
+      error
+    );
+    throw error;
+  }
+},
+getWorkShiftId: async (staffId, date) => {
+  const res = await axios.get(
+    `https://localhost:7169/api/WorkShifts/GetWorkShiftId?staffId=${staffId}&date=${date}`,
+    getAuthHeader()
+  );
+  return res.data;
+},
 
   // Cập nhật ca làm
   update: async (id, data) => {
@@ -144,7 +179,11 @@ const WorkShiftService = {
     }
     try {
       console.log("📤 Dữ liệu cập nhật:", data);
-      const response = await axios.put(`${API_URL}/${id}`, data, getAuthHeader());
+      const response = await axios.put(
+        `${API_URL}/${id}`,
+        data,
+        getAuthHeader()
+      );
       return response.data;
     } catch (error) {
       console.error(`❌ Lỗi khi cập nhật ca làm với ID ${id}:`, error);

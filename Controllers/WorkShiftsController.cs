@@ -1,4 +1,6 @@
-﻿using System;
+﻿// ✅ Final version of WorkShiftsController (refactored to use StaffTimeSlots)
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,24 +24,18 @@ namespace BookingSalonHair.Controllers
             _context = context;
         }
 
-        // GET: api/WorkShifts
         [HttpGet]
         [Authorize(Roles = "admin,staff,customer")]
         public async Task<ActionResult<IEnumerable<WorkShift>>> GetWorkShifts()
         {
-            var workShifts = await _context.WorkShifts
-                .AsNoTracking()
-                .ToListAsync();
-
+            var workShifts = await _context.WorkShifts.AsNoTracking().ToListAsync();
             return Ok(workShifts);
         }
 
-        // GET: api/WorkShifts/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetWorkShift(int id)
         {
-            var shift = await _context.WorkShifts
-                .AsNoTracking()
+            var shift = await _context.WorkShifts.AsNoTracking()
                 .Where(w => w.Id == id)
                 .Select(w => new
                 {
@@ -61,8 +57,7 @@ namespace BookingSalonHair.Controllers
                 })
                 .FirstOrDefaultAsync();
 
-            if (shift == null)
-                return NotFound();
+            if (shift == null) return NotFound();
 
             var result = new WorkShiftDetailDTO
             {
@@ -70,7 +65,6 @@ namespace BookingSalonHair.Controllers
                 Name = shift.WorkShift.Name,
                 StartTime = shift.WorkShift.StartTime,
                 EndTime = shift.WorkShift.EndTime,
-                ShiftType = shift.WorkShift.ShiftType,
                 MaxUsers = shift.WorkShift.MaxUsers,
                 Appointments = shift.Appointments.Select(a => new WorkShiftAppointmentDTO
                 {
@@ -91,7 +85,6 @@ namespace BookingSalonHair.Controllers
             return Ok(result);
         }
 
-        // POST: api/WorkShifts
         [HttpPost]
         [Authorize(Roles = "admin")]
         public async Task<ActionResult<WorkShift>> PostWorkShift(WorkShift workShift)
@@ -105,14 +98,11 @@ namespace BookingSalonHair.Controllers
             return CreatedAtAction(nameof(GetWorkShift), new { id = workShift.Id }, workShift);
         }
 
-        // PUT: api/WorkShifts/{id}
         [HttpPut("{id}")]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> PutWorkShift(int id, WorkShift workShift)
         {
-            if (id != workShift.Id)
-                return BadRequest("ID không khớp.");
-
+            if (id != workShift.Id) return BadRequest("ID không khớp.");
             _context.Entry(workShift).State = EntityState.Modified;
 
             try
@@ -121,23 +111,19 @@ namespace BookingSalonHair.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await _context.WorkShifts.AnyAsync(w => w.Id == id))
-                    return NotFound();
-
+                if (!await _context.WorkShifts.AnyAsync(w => w.Id == id)) return NotFound();
                 throw;
             }
 
             return NoContent();
         }
 
-        // DELETE: api/WorkShifts/{id}
         [HttpDelete("{id}")]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> DeleteWorkShift(int id)
         {
             var workShift = await _context.WorkShifts.FindAsync(id);
-            if (workShift == null)
-                return NotFound();
+            if (workShift == null) return NotFound();
 
             _context.WorkShifts.Remove(workShift);
             await _context.SaveChangesAsync();
@@ -145,40 +131,105 @@ namespace BookingSalonHair.Controllers
             return NoContent();
         }
 
-        // POST: api/WorkShifts/by-type
-        [HttpPost("by-type")]
+        [HttpPost("with-time-slots")]
         [Authorize(Roles = "admin")]
-        public async Task<IActionResult> CreateWorkShiftByType([FromBody] CreateWorkShiftDto dto)
+        public async Task<ActionResult<WorkShift>> CreateWorkShiftWithTimeSlots([FromBody] CreateWorkShiftDto dto)
         {
-            if (!Enum.IsDefined(typeof(ShiftType), dto.ShiftType))
-                return BadRequest("Loại ca làm không hợp lệ.");
+            DateTime selectedDate = dto.Date;
+            DayOfWeek dayOfWeekEnum = selectedDate.DayOfWeek;
 
-            var (start, end) = dto.ShiftType switch
-            {
-                ShiftType.Morning => (new TimeSpan(8, 0, 0), new TimeSpan(12, 0, 0)),
-                ShiftType.Afternoon => (new TimeSpan(13, 0, 0), new TimeSpan(17, 0, 0)),
-                ShiftType.Evening => (new TimeSpan(18, 0, 0), new TimeSpan(22, 0, 0)),
-                _ => (TimeSpan.Zero, TimeSpan.Zero)
-            };
+            var existingWorkShift = await _context.WorkShifts.FirstOrDefaultAsync(ws =>
+                ws.Date == selectedDate &&
+                ws.StartTime == TimeSpan.Parse(dto.StartTime) &&
+                ws.EndTime == TimeSpan.Parse(dto.EndTime));
+
+            if (existingWorkShift != null)
+                return BadRequest(new { message = "Ca làm việc đã tồn tại vào ngày và giờ này." });
 
             var workShift = new WorkShift
             {
                 Name = dto.Name,
-                ShiftType = dto.ShiftType,
-                StartTime = start,
-                EndTime = end,
+                DayOfWeek = dayOfWeekEnum,
                 MaxUsers = dto.MaxUsers,
-                DayOfWeek = dto.DayOfWeek
+                StartTime = TimeSpan.Parse(dto.StartTime),
+                EndTime = TimeSpan.Parse(dto.EndTime),
+                Date = selectedDate
             };
+
+            var timeSlots = new List<TimeSlot>();
+            for (var time = workShift.StartTime; time < workShift.EndTime; time = time.Add(TimeSpan.FromMinutes(30)))
+            {
+                timeSlots.Add(new TimeSlot
+                {
+                    StartTime = time,
+                    EndTime = time.Add(TimeSpan.FromMinutes(30)),
+                    IsAvailable = true,
+                    WorkShift = workShift,
+                    Date = selectedDate
+                });
+            }
 
             _context.WorkShifts.Add(workShift);
             await _context.SaveChangesAsync();
 
-            return Ok(new
+            foreach (var slot in timeSlots)
             {
-                message = $"Đã tạo ca làm {dto.ShiftType} vào ngày {dto.DayOfWeek}",
-                workShift
-            });
+                slot.WorkShiftId = workShift.Id;
+            }
+
+            _context.TimeSlots.AddRange(timeSlots);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = $"Đã tạo ca làm việc vào ngày {selectedDate:dd/MM/yyyy}", workShift });
         }
+
+        [HttpGet("GetStaffByDate/{date}")]
+        public async Task<ActionResult<IEnumerable<User>>> GetStaffByDate(DateTime date)
+        {
+            var staffWorkShifts = await _context.UserWorkShifts
+                .Where(uws => uws.WorkShift.Date.Date == date.Date)
+                .Include(uws => uws.User)
+                .ToListAsync();
+
+            if (!staffWorkShifts.Any())
+                return NotFound(new { message = "Không có nhân viên đăng ký làm vào ngày này." });
+
+            return Ok(staffWorkShifts.Select(uws => uws.User).ToList());
+        }
+        // hàm lấy time ca làm của nhân viên
+        [HttpGet("GetAvailableTimeSlots/{staffId}/{date}")]
+        public async Task<ActionResult<IEnumerable<TimeSlot>>> GetAvailableTimeSlots(int staffId, DateTime date)
+        {
+            var timeSlots = await _context.StaffTimeSlots
+                .Include(sts => sts.TimeSlot)
+                .Where(sts => sts.StaffId == staffId && sts.TimeSlot.Date.Date == date.Date && sts.TimeSlot.IsAvailable)
+                .Select(sts => sts.TimeSlot)
+                .ToListAsync();
+
+            if (!timeSlots.Any())
+            {
+                return NotFound(new { message = "Không có thời gian làm việc còn trống cho nhân viên này vào ngày này." });
+            }
+
+            return Ok(timeSlots);
+        }
+        [HttpGet("GetWorkShiftId")]
+        public async Task<IActionResult> GetWorkShiftId(int staffId, string date)
+        {
+            if (!DateTime.TryParse(date, out var parsedDate))
+                return BadRequest("Ngày không hợp lệ.");
+
+            var workShift = await _context.UserWorkShifts
+                .Include(uws => uws.WorkShift)
+                .Where(uws => uws.UserId == staffId && uws.WorkShift.Date.Date == parsedDate.Date)
+                .Select(uws => uws.WorkShift)
+                .FirstOrDefaultAsync();
+
+            if (workShift == null)
+                return NotFound(new { message = "Không tìm thấy ca làm." });
+
+            return Ok(new { workShiftId = workShift.Id });
+        }
+
     }
 }
