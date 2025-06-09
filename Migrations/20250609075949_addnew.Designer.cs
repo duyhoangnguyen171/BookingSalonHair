@@ -12,8 +12,8 @@ using SalonBooking.API.Data;
 namespace BookingSalonHair.Migrations
 {
     [DbContext(typeof(SalonContext))]
-    [Migration("20250609053144_SyncModelSnapshotClean")]
-    partial class SyncModelSnapshotClean
+    [Migration("20250609075949_addnew")]
+    partial class addnew
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

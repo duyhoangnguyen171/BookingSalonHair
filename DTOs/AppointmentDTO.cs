@@ -1,15 +1,7 @@
 ﻿using System;
-
+using BookingSalonHair.Models;
 namespace BookingSalonHair.DTOs
 {
-    public enum AppointmentStatus
-    {
-        Pending,   // Đang chờ duyệt
-        Confirmed, // Đã xác nhận
-        Completed, // Đã hoàn thành
-        Canceled   // Đã hủy
-    }
-
     public class AppointmentDTO
     {
         private DateTime _appointmentDate;

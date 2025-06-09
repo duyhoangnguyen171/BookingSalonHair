@@ -91,10 +91,5 @@ namespace BookingSalonHair.Services
         {
             throw new NotImplementedException();
         }
-
-        public Task<bool> UpdateAppointmentStatusAsync(int id, DTOs.AppointmentStatus status)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

@@ -139,9 +139,9 @@
         "IsRequired": true
       },
       {
-        "Name": "status",
-        "Type": "System.String",
-        "IsRequired": false
+        "Name": "dto",
+        "Type": "BookingSalonHair.DTOs.AppointmentStatusUpdateDto",
+        "IsRequired": true
       }
     ],
     "ReturnTypes": []

@@ -19,7 +19,7 @@ namespace BookingSalonHair.Controllers
     {
         private readonly SalonContext _context;
         private readonly EmailHelper _emailHelper;
-
+       
         public AppointmentsController(SalonContext context, EmailHelper emailHelper)
         {
             _context = context;
@@ -361,6 +361,68 @@ namespace BookingSalonHair.Controllers
                 return StatusCode(500, new { error = "Lỗi server", detail = ex.Message });
             }
         }
+        //[HttpPut("{id}/status")]
+        //[Authorize(Roles = "staff,admin")]
+        //public async Task<IActionResult> UpdateAppointmentStatus(int id, [FromBody] AppointmentStatusUpdateDto dto)
+        //{
+        //    var appointment = await _context.Appointments
+        //        .Include(a => a.Customer)
+        //        .Include(a => a.Staff)
+        //        .FirstOrDefaultAsync(a => a.Id == id);
+
+        //    if (appointment == null)
+        //        return NotFound();
+
+        //    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        //    if (appointment.StaffId.ToString() != userId && !User.IsInRole("admin"))
+        //        return Forbid();
+
+        //    var oldStatus = appointment.Status;
+        //    appointment.Status = dto.Status;
+        //    appointment.UpdatedAt = DateTime.UtcNow;
+
+        //    _context.Entry(appointment).State = EntityState.Modified;
+
+        //    try
+        //    {
+        //        await _context.SaveChangesAsync();
+
+        //        // Gửi email nếu có email khách hàng
+        //        if (!string.IsNullOrWhiteSpace(appointment.Customer?.Email))
+        //        {
+        //            var statusText = GetStatusText(dto.Status);
+        //            var subject = "Cập nhật trạng thái lịch hẹn";
+        //            var message = $"""
+        //        Xin chào {appointment.Customer.FullName},
+                
+        //        Trạng thái lịch hẹn của bạn đã được cập nhật từ **{GetStatusText(oldStatus)}** sang **{statusText}**.
+
+        //        Thời gian hẹn: {appointment.AppointmentDate:HH:mm dd/MM/yyyy}
+        //        Nhân viên: {appointment.Staff?.FullName ?? "Chưa phân công"}
+
+        //        Trân trọng,
+        //        Salon của chúng tôi
+        //        """;
+
+        //            try
+        //            {
+        //                await _emailHelper.SendEmailAsync(appointment.Customer.Email, subject, message);
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                Console.WriteLine($"Lỗi gửi email cập nhật trạng thái: {ex.Message}");
+        //            }
+        //        }
+
+        //        return NoContent();
+        //    }
+        //    catch (DbUpdateConcurrencyException)
+        //    {
+        //        if (!_context.Appointments.Any(e => e.Id == id))
+        //            return NotFound();
+        //        throw;
+        //    }
+        //}
 
         // DELETE: api/Appointments/5
         [HttpDelete("{id}")]
@@ -384,34 +446,25 @@ namespace BookingSalonHair.Controllers
         // PUT: api/Appointments/5/status
         [HttpPut("{id}/status")]
         [Authorize(Roles = "staff,admin")]
-        public async Task<IActionResult> UpdateAppointmentStatus(int id, Models.AppointmentStatus status)
+        public async Task<IActionResult> UpdateAppointmentStatus(int id, [FromBody] AppointmentStatusUpdateDto dto)
         {
             var appointment = await _context.Appointments.FindAsync(id);
             if (appointment == null)
                 return NotFound();
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
             if (appointment.StaffId.ToString() != userId && !User.IsInRole("admin"))
                 return Forbid();
 
-            appointment.Status = status;
+            appointment.Status = dto.Status;
+            appointment.UpdatedAt = DateTime.UtcNow;
 
             _context.Entry(appointment).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Appointments.Any(e => e.Id == id))
-                    return NotFound();
-                throw;
-            }
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
+
 
         // PUT: api/Appointments/5/cancel
         [HttpPut("{id}/cancel")]
@@ -436,6 +489,18 @@ namespace BookingSalonHair.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Hủy lịch hẹn thành công" });
+        }
+        private string GetStatusText(AppointmentStatus status)
+        {
+            return status switch
+            {
+                AppointmentStatus.Pending => "Đang chờ duyệt",
+                AppointmentStatus.Accepted => "Đã xác nhận",
+                AppointmentStatus.InProgress => "Đang thực hiện",
+                AppointmentStatus.Completed => "Đã hoàn thành",
+                AppointmentStatus.Canceled => "Đã hủy",
+                _ => "Không xác định"
+            };
         }
     }
 }

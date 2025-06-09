@@ -8,22 +8,23 @@ import {
   Stack,
   TextField,
   Typography,
-} from '@mui/material';
-import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import AppointmentService from '../../services/AppointmentService';
-import ServiceService from '../../services/Serviceservice';
-import * as UserService from '../../services/UserService';
-import AppointmentAdd from './AppointmentAdd';
-import AppointmentDetail from './AppointmentDetail';
-import AppointmentEdit from './AppointmentEdit';
-
+} from "@mui/material";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import AppointmentService from "../../services/AppointmentService";
+import ServiceService from "../../services/Serviceservice";
+import * as UserService from "../../services/UserService";
+import AppointmentAdd from "./AppointmentAdd";
+import AppointmentDetail from "./AppointmentDetail";
+import AppointmentEdit from "./AppointmentEdit";
 // Hàm giải tham chiếu vòng
 const resolveReferences = (data, cache = new Map()) => {
   if (!data) {
     return [];
   }
-  if (typeof data !== 'object') return data;
+  if (typeof data !== "object") return data;
 
   if (data.$id && cache.has(data.$id)) {
     return cache.get(data.$id);
@@ -44,7 +45,7 @@ const resolveReferences = (data, cache = new Map()) => {
   }
 
   for (const key in resolved) {
-    if (key !== '$ref' && key !== '$id') {
+    if (key !== "$ref" && key !== "$id") {
       resolved[key] = resolveReferences(resolved[key], cache);
     }
   }
@@ -70,24 +71,24 @@ const Appointment = () => {
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState("desc");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const rowsPerPage = 10;
-
+  const [selectedStatusId, setSelectedStatusId] = useState(null);
+  const [previousStatusMap, setPreviousStatusMap] = useState({});
   // Check query parameters for page
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const pageParam = parseInt(params.get('page'), 10);
+    const pageParam = parseInt(params.get("page"), 10);
     if (pageParam && pageParam >= 1 && pageParam <= totalPages) {
-      console.log('Setting page from query param:', pageParam);
       setPage(pageParam);
     } else {
       setPage(1);
     }
     // Clear search term on mount
-    setSearchTerm('');
+    setSearchTerm("");
   }, [location.search, totalPages]);
 
   useEffect(() => {
@@ -110,8 +111,8 @@ const Appointment = () => {
         setStaffs(userRes.$values || userRes.data || []);
         setLoading(false);
       } catch (err) {
-        console.error('Lỗi khi tải dữ liệu:', err);
-        setError('Không thể tải dữ liệu');
+        console.error("Lỗi khi tải dữ liệu:", err);
+        setError("Không thể tải dữ liệu");
         setLoading(false);
       }
     };
@@ -123,7 +124,7 @@ const Appointment = () => {
 
     if (searchTerm) {
       filtered = filtered.filter((app) => {
-        const customerName = app.customerFullName || '';
+        const customerName = app.customerFullName || "";
         return customerName.toLowerCase().includes(searchTerm.toLowerCase());
       });
     }
@@ -131,7 +132,7 @@ const Appointment = () => {
     filtered.sort((a, b) => {
       const dateA = new Date(a.appointmentDate);
       const dateB = new Date(b.appointmentDate);
-      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+      return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
     });
 
     setFilteredAppointments(filtered);
@@ -145,29 +146,29 @@ const Appointment = () => {
 
   const getStatusText = (status) => {
     const statusMap = {
-      0: 'Mới tạo',
-      1: 'Chờ xác nhận',
-      2: 'Đã xác nhận',
-      3: 'Đã hoàn thành',
-      4: 'Đã hủy',
+      0: "Mới tạo",
+      1: "Chờ xác nhận",
+      2: "Đã xác nhận",
+      3: "Đã hoàn thành",
+      4: "Đã hủy",
     };
-    return statusMap[status] || 'Chưa xác định';
+    return statusMap[status] || "Chưa xác định";
   };
 
   const formatDate = (date) => {
-    if (!date) return 'Ngày không xác định';
+    if (!date) return "Ngày không xác định";
     const newDate = new Date(date);
     if (isNaN(newDate.getTime())) {
-      console.error('Invalid date format:', date);
-      return 'Ngày không hợp lệ';
+      console.error("Invalid date format:", date);
+      return "Ngày không hợp lệ";
     }
-    return newDate.toLocaleString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
+    return newDate.toLocaleString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     });
   };
 
@@ -186,7 +187,7 @@ const Appointment = () => {
           )
         );
         // Clear search term
-        setSearchTerm('');
+        setSearchTerm("");
         // Clear error state
         setError(null);
         // Refetch page 1
@@ -195,21 +196,20 @@ const Appointment = () => {
             const appointmentData = res.data.data
               ? resolveReferences(res.data.data)
               : resolveReferences(res.data) || [];
-            console.log('Refreshed Appointments (Cancel):', appointmentData);
             setAppointments(appointmentData);
             setTotalPages(res.data.totalPages || 1);
             setPage(1);
           })
           .catch((err) => {
-            console.error('Lỗi khi làm mới danh sách sau hủy:', err);
-            setError('Không thể làm mới danh sách lịch hẹn');
+            console.error("Lỗi khi làm mới danh sách sau hủy:", err);
+            setError("Không thể làm mới danh sách lịch hẹn");
           });
         setOpenCancelDialog(false);
         setSelectedAppointmentId(null);
       })
       .catch((err) => {
-        console.error('Lỗi khi hủy cuộc hẹn:', err);
-        setError('Không thể hủy cuộc hẹn');
+        console.error("Lỗi khi hủy cuộc hẹn:", err);
+        setError("Không thể hủy cuộc hẹn");
         setOpenCancelDialog(false);
       });
   };
@@ -218,12 +218,27 @@ const Appointment = () => {
     setOpenCancelDialog(false);
     setSelectedAppointmentId(null);
   };
-
+  const handleStatusChange = async (appointmentId, newStatus) => {
+    try {
+      await AppointmentService.updateStatus(appointmentId, newStatus);
+      setAppointments((prev) =>
+        prev.map((app) =>
+          app.id === appointmentId ? { ...app, status: newStatus } : app
+        )
+      );
+      toast.success("Cập nhật trạng thái thành công!");
+    } catch (error) {
+      console.error("Lỗi khi cập nhật trạng thái:", error);
+      toast.error("Không thể cập nhật trạng thái.");
+    }
+  };
   const handleEdit = (appointmentId) => {
-    const appointmentToEdit = appointments.find((app) => app.id === appointmentId);
+    const appointmentToEdit = appointments.find(
+      (app) => app.id === appointmentId
+    );
     if (!appointmentToEdit) {
       console.error(`Không tìm thấy lịch hẹn với ID: ${appointmentId}`);
-      alert('Lịch hẹn không tồn tại.');
+      alert("Lịch hẹn không tồn tại.");
       return;
     }
     setSelectedAppointment(appointmentToEdit);
@@ -232,10 +247,12 @@ const Appointment = () => {
   };
 
   const handleView = (appointmentId) => {
-    const appointmentToView = appointments.find((app) => app.id === appointmentId);
+    const appointmentToView = appointments.find(
+      (app) => app.id === appointmentId
+    );
     if (!appointmentToView) {
       console.error(`Không tìm thấy lịch hẹn với ID: ${appointmentId}`);
-      alert('Lịch hẹn không tồn tại.');
+      alert("Lịch hẹn không tồn tại.");
       return;
     }
     setSelectedAppointment(appointmentToView);
@@ -266,11 +283,10 @@ const Appointment = () => {
   };
 
   const handleSortToggle = () => {
-    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    setSortOrder(sortOrder === "asc" ? "desc" : "asc");
   };
 
   const handlePageChange = (event, value) => {
-    console.log('Manually switching to Page:', value);
     setPage(value);
   };
 
@@ -279,7 +295,7 @@ const Appointment = () => {
   }
 
   if (error) {
-    return <div style={{ color: 'red' }}>{error}</div>;
+    return <div style={{ color: "red" }}>{error}</div>;
   }
 
   // if (!appointments.length && page === 1) {
@@ -306,7 +322,7 @@ const Appointment = () => {
           size="small"
         />
         <Button variant="contained" onClick={handleSortToggle}>
-          Sắp xếp theo ngày ({sortOrder === 'asc' ? 'Tăng' : 'Giảm'})
+          Sắp xếp theo ngày ({sortOrder === "asc" ? "Tăng" : "Giảm"})
         </Button>
         <Button
           variant="contained"
@@ -320,7 +336,7 @@ const Appointment = () => {
 
       {filteredAppointments.length === 0 ? (
         <p>
-          Không có cuộc hẹn nào trên trang này.{' '}
+          Không có cuộc hẹn nào trên trang này.{" "}
           {page < totalPages && (
             <Button
               variant="text"
@@ -330,7 +346,7 @@ const Appointment = () => {
               Xem trang tiếp theo
             </Button>
           )}
-          {page === totalPages && 'Không còn lịch hẹn nào chưa hủy.'}
+          {page === totalPages && "Không còn lịch hẹn nào chưa hủy."}
         </p>
       ) : (
         <>
@@ -352,11 +368,42 @@ const Appointment = () => {
                   <th scope="row">{(page - 1) * rowsPerPage + index + 1}</th>
                   <td>{app.customerFullName}</td>
                   <td>{app.staffFullName}</td>
-                  <td>{formatDate(app.appointmentDate)}</td>
                   <td>
-                    {app.appointmentServices?.map((s) => s.serviceName).join(', ') || 'Không có dịch vụ'}
+                    {app.timeSlot?.startTime
+                      ? `${app.timeSlot.startTime.substring(0, 5)} ${new Date(
+                          app.appointmentDate
+                        ).toLocaleDateString("vi-VN")}`
+                      : formatDate(app.appointmentDate)}
                   </td>
-                  <td>{getStatusText(app.status)}</td>
+                  <td>
+                    {app.appointmentServices
+                      ?.map((s) => s.serviceName)
+                      .join(", ") || "Không có dịch vụ"}
+                  </td>
+                  <td>
+                    <select
+                      value={app.status}
+                      onChange={(e) => {
+                        const newStatus = parseInt(e.target.value);
+                        if (newStatus === app.status) {
+                          toast.info("Trạng thái đã là hiện tại.");
+                          return;
+                        }
+                        handleStatusChange(app.id, newStatus);
+                      }}
+                      style={{
+                        padding: "4px",
+                        borderRadius: "4px",
+                        minWidth: "140px",
+                      }}
+                    >
+                      <option value={0}>Mới tạo</option>
+                      <option value={1}>Chờ xác nhận</option>
+                      <option value={2}>Đã xác nhận</option>
+                      <option value={3}>Đã hoàn thành</option>
+                      <option value={4}>Đã hủy</option>
+                    </select>
+                  </td>
                   <td>
                     <Stack direction="row" spacing={1}>
                       <Button
@@ -411,16 +458,17 @@ const Appointment = () => {
               const appointmentData = res.data.data
                 ? resolveReferences(res.data.data)
                 : resolveReferences(res.data) || [];
-              console.log('Refreshed Appointments (Add):', appointmentData);
               setAppointments(appointmentData);
-              setFilteredAppointments(appointmentData.filter((app) => app.status !== 4));
+              setFilteredAppointments(
+                appointmentData.filter((app) => app.status !== 4)
+              );
               setTotalPages(res.data.totalPages || 1);
               setPage(1);
-              setSearchTerm('');
+              setSearchTerm("");
             })
             .catch((err) => {
-              console.error('Lỗi khi làm mới danh sách lịch hẹn:', err);
-              setError('Không thể làm mới danh sách lịch hẹn');
+              console.error("Lỗi khi làm mới danh sách lịch hẹn:", err);
+              setError("Không thể làm mới danh sách lịch hẹn");
             });
           handleCloseAddDialog();
         }}
@@ -435,14 +483,15 @@ const Appointment = () => {
               const appointmentData = res.data.data
                 ? resolveReferences(res.data.data)
                 : resolveReferences(res.data) || [];
-              console.log('Refreshed Appointments (Edit):', appointmentData);
               setAppointments(appointmentData);
-              setFilteredAppointments(appointmentData.filter((app) => app.status !== 4));
+              setFilteredAppointments(
+                appointmentData.filter((app) => app.status !== 4)
+              );
               setTotalPages(res.data.totalPages || 1);
             })
             .catch((err) => {
-              console.error('Lỗi khi làm mới danh sách lịch hẹn (edit):', err);
-              setError('Không thể làm mới danh sách lịch hẹn');
+              console.error("Lỗi khi làm mới danh sách lịch hẹn (edit):", err);
+              setError("Không thể làm mới danh sách lịch hẹn");
             });
           handleCloseEditDialog();
         }}

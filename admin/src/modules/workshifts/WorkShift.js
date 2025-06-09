@@ -93,7 +93,6 @@ const Workshift = () => {
     try {
       const response = await WorkShiftService.getAll();
       const data = response?.$values ?? response;
-      console.log("data:", data);
 
       const shiftData = Array.isArray(data) ? data : [];
       setShifts(shiftData);
@@ -174,7 +173,6 @@ const Workshift = () => {
   };
 
   const handleViewDetails = (shiftId) => {
-    console.log("Shift ID:", shiftId);
     window.location.href = `http://localhost:3001/admin/workshifts/details/view/${shiftId}`;
   };
 
@@ -196,7 +194,6 @@ const Workshift = () => {
   };
 
   // Kiểm tra hàm
-  console.log(getSpecificDate(2, "2025-06-13")); // Tìm ngày thứ Ba tiếp theo từ hôm nay
 
   const getDayName = (dayNumber) => {
     const days = [

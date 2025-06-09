@@ -5,7 +5,7 @@
 namespace BookingSalonHair.Migrations
 {
     /// <inheritdoc />
-    public partial class SyncModelSnapshotClean : Migration
+    public partial class addnew : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

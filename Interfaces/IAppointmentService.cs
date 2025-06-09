@@ -1,4 +1,5 @@
 ﻿using BookingSalonHair.DTOs;
+using BookingSalonHair.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

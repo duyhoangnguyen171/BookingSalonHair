@@ -198,15 +198,27 @@
               "type": "integer",
               "format": "int32"
             }
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/AppointmentStatus"
-            }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppointmentStatusUpdateDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppointmentStatusUpdateDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppointmentStatusUpdateDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -1879,15 +1891,14 @@
         "type": "integer",
         "format": "int32"
       },
-      "AppointmentStatus2": {
-        "enum": [
-          0,
-          1,
-          2,
-          3
-        ],
-        "type": "integer",
-        "format": "int32"
+      "AppointmentStatusUpdateDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/AppointmentStatus"
+          }
+        },
+        "additionalProperties": false
       },
       "AppointmentUpdateDto": {
         "type": "object",
@@ -1927,7 +1938,7 @@
             "nullable": true
           },
           "status": {
-            "$ref": "#/components/schemas/AppointmentStatus2"
+            "$ref": "#/components/schemas/AppointmentStatus"
           }
         },
         "additionalProperties": false
